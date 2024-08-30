@@ -4,35 +4,60 @@ mod insert;
 mod delet;
 mod update;
 mod query;
+mod condition;
 
 use delet::Delet;
 use update::Update;
 use insert::Insert;
-use query::Query;
+use insert::insert_reg;
+use query::mod_file;
 use query::TypeError;
 
 // TODO:
 // Agregar casos de error en los distintas cosas :)
 // Crear el SELECT
-// agregar utilidades a la clase query
-fn parsear(query: &String) -> Result<Box<dyn Query>, TypeError>{
+// Terminar el update
+// modificar utilidades a la clase query
 
-    let vec: Vec<&str> =  query.split(' ').collect::<Vec<&str>>();
+fn get_path(archivo: &str, dir:&String) -> String{
+
+    let mut path: String = String::from("");
+    path.push_str(dir);
+    path.push('/');
+    path.push_str(archivo);
+    path.push_str(".csv");
+    path
+}
+
+fn run(query: &String, dir:String) -> Result<(), TypeError>{
+
+    let vec: Vec<&str> = query.trim().split_whitespace().collect::<Vec<&str>>();
 
     match vec[0] {
         "INSERT" => {
+            let path = get_path(vec[2], &dir);
             let instance = Insert::new(vec[2].to_string(), query);
-            Ok(Box::new(instance))
+            insert_reg(path, instance)?;
+            Ok(())
         },
         "UPDATE" => {
-            let instance = Update::new(vec[2].to_string(), query);
-            Ok(Box::new(instance))
+            let path = get_path(vec[1], &dir);
+            let instance = Update::new(vec[1].to_string(), query);
+            mod_file(path, Box::new(instance))?;
+            Ok(())
         },
-        "DELET"  => {
+        "DELETE" => {
+            let path = get_path(vec[2], &dir);
             let instance = Delet::new(vec[2].to_string(), query);
-            Ok(Box::new(instance))
+            mod_file(path, Box::new(instance))?;
+            Ok(())
         },
-        //"SELECT" => Select::new(vec[2].to_string(), query)?,
+        "SELECT" => {
+           // let path = get_path(vec[2], &dir);
+           //let instance = Delet::new(vec[2].to_string(), query);
+           // mod_file(path, Box::new(instance))?;
+            Ok(())
+        },
         _ => Err(TypeError::InvalidSintax),
     }
 
@@ -44,10 +69,6 @@ fn main()-> Result<(), TypeError>{
     if args.len() < 3{
         println!("INVALID_SYNTAX: El comando debe correrse como 'cargo run -- ruta/a/tablas <consulta>'" );
     }
-
-    let a:Box<dyn Query>  = parsear(&args[2])?;
-
-    a.operate("id,id_cliente,producto,cantidad".to_string(), "5".to_string());
-
-    Ok(())
+    
+    run(&args[2], args[1].to_owned())
 }

@@ -7,11 +7,11 @@ use condition::Expresion;
 use condition::evaluar;
 
 #[derive(Debug)]
-pub struct Delet{
+pub struct Select{
     conditions: Expresion,
 }
 
-impl Delet{
+impl Select{
     pub fn new(table:String, query: &String) -> Self{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
@@ -22,7 +22,7 @@ impl Delet{
     }
 }
 
-impl Query for Delet{
+impl Query for Select{
     fn operate(&self, index:&String, actual:String) -> String{
 
         let condition: bool = match &self.conditions{

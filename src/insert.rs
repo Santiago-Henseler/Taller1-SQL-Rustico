@@ -1,4 +1,7 @@
 use std::collections::HashMap;
+use std::fs::OpenOptions;
+use std::io::{BufRead, BufReader};
+use std::io::Write;
 
 use crate::query;
 use query::Query;
@@ -7,7 +10,6 @@ use query::parser_kv;
 
 #[derive(Debug)]
 pub struct Insert{
-    table:String,
     values: HashMap<String, String>
 }
 
@@ -16,8 +18,7 @@ impl Insert{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
         let mut hash: HashMap<String, String> = HashMap::new();
-        
-        //optimizar esto -_-
+
         let mut keys: Vec<String> = Vec::new();
         let mut values: Vec<String> = Vec::new();
 
@@ -30,27 +31,21 @@ impl Insert{
         }
 
         for i in 0..keys.len(){
-            hash.insert(keys[i].clone(), values[i].clone());
+            hash.insert(keys[i].to_owned(), values[i].to_owned());
         }
  
         Self {
-            table: table,
             values: hash,
         }
     }
 
-    pub fn get_table(&self) -> &String{
-        &self.table
-    }
-
-
 }
 
 impl Query for Insert{
-    fn operate(&self, index:String, _actual:String) -> String{
+    fn operate(&self, index:&String, _actual:String) -> String{
         let mut word: String = String::new();
 
-        for s in index.split(","){
+        for s in index.replace("\n", "").split(","){
             if self.values.contains_key(s){
                 word.push_str(self.values.get(s).unwrap_or(&"".to_string()));
             }else{
@@ -62,4 +57,17 @@ impl Query for Insert{
 
         word
     }
+}
+
+pub fn insert_reg(path: String, instance: Insert)-> Result<(), TypeError>{
+
+    let mut file = OpenOptions::new().read(true).append(true).open(&path).map_err(|_|  TypeError::InvalidaTable)?;
+
+    let mut reader = BufReader::new(&file);
+
+    let mut column_index = String::new();
+    reader.read_line(&mut column_index).map_err(|_| TypeError::Error)?;
+
+    writeln!(file, "{}", instance.operate(&column_index, "".to_string())).map_err(|_| TypeError::Error)?;
+    Ok(())
 }

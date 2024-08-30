@@ -1,46 +1,44 @@
 use crate::query;
+use crate::condition;
 use query::Query;
 use query::TypeError;
-use query::parser_kv;
+use condition::get_conditions;
+use condition::Expresion;
+use condition::evaluar;
 
 #[derive(Debug)]
 pub struct Update{
-    table:String,
-   // values: Vec<String>,
-    conditions: Vec<String>,
+    conditions: Expresion,
+    set: Expresion,
 }
 
 impl Update{
     pub fn new(table:String, query: &String) -> Self{
         
-        let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
-
-        // tratar de optimizar
-        let conditions: Vec<String> = str[1].split("WHERE").collect::<Vec<&str>>()[1].split("=").map(|s: &str| s.to_string().replace(" ", "").replace("'", "")).collect::<Vec<String>>();
-
-        println!("{:?}", query.split("SET").collect::<Vec<&str>>());
+        let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>();
 
         Self {
-            table: table,
-            conditions: conditions,
+            conditions: get_conditions(str[1].replace(',', " AND ").as_str()),
+            set: get_conditions(str[0].replace(',', " AND ").split("SET").collect::<Vec<&str>>()[1])
         }
-    }
-
-    pub fn get_table(&self) -> &String{
-        &self.table
     }
 }
 
 impl Query for Update{
-    fn operate(&self, index:String, actual:String) -> String{
-        let index_vec: Vec<String> = index.split(",").map(|f| f.to_string()).collect::<Vec<String>>();
-        let actual_vec: Vec<String> = actual.split(",").map(|f| f.to_string()).collect::<Vec<String>>();
+    fn operate(&self, index:&String, actual:String) -> String{
 
+        let condition: bool = match &self.conditions{
+            Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", "")),
+            Expresion::And((c_izq, c_der)) => evaluar(c_izq, index, &actual.replace("\n", "")) && evaluar(c_der, index, &actual.replace("\n", "")),
+            Expresion::Not(c) => !evaluar(c, index, &actual.replace("\n", "")),
+            Expresion::Or((c_izq, c_der))=> evaluar(c_izq, index, &actual.replace("\n", "")) || evaluar(c_der, index, &actual.replace("\n", "")),
+        };
 
-        
-        match true{
-            true => "".to_string(),
-            false => actual,
+        let mut mods = actual;
+
+        match condition{
+            true => {mods.push_str("string"); mods},
+            false => mods,
         }
     }
 }
