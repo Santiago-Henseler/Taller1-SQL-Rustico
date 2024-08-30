@@ -24,6 +24,29 @@ impl Update{
     }
 }
 
+fn update_str(expresion: &Expresion, index: &String, actual: String) -> String{
+
+    let mut new_string: String = String::from("");
+
+    match expresion{
+        Expresion::Condicion(c) => {
+            let act_vec = actual.split(",").collect::<Vec<&str>>();
+            for (i, s) in index.replace("\n", "").split(",").enumerate(){
+                if s.to_string() == c.column_index{
+                    new_string.push_str(&c.value);
+                }else{
+                    new_string.push_str(act_vec[i]);
+                }
+                new_string.push(',');
+            }
+            new_string.pop();
+            },
+        _ => print!("error"),
+    }
+
+    new_string
+}
+
 impl Query for Update{
     fn operate(&self, index:&String, actual:String) -> String{
 
@@ -34,11 +57,9 @@ impl Query for Update{
             Expresion::Or((c_izq, c_der))=> evaluar(c_izq, index, &actual.replace("\n", "")) || evaluar(c_der, index, &actual.replace("\n", "")),
         };
 
-        let mut mods = actual;
-
         match condition{
-            true => {mods.push_str("string"); mods},
-            false => mods,
+            true => update_str(&self.set, index, actual),
+            false => actual,
         }
     }
 }

@@ -29,6 +29,8 @@ pub fn mod_file(path:String, instance: Box<dyn Query>)-> Result<(), TypeError>{
     let mut column_index = String::new();
     reader.read_line(&mut column_index).map_err(|_|  TypeError::Error)?;
 
+    column_index = column_index.replace("\n", "");
+
     let mut temp_file = OpenOptions::new().write(true).create(true).open("tmp.csv").map_err(|_|  TypeError::Error)?;
 
     writeln!(temp_file, "{}", column_index).map_err(|_|  TypeError::Error)?;
