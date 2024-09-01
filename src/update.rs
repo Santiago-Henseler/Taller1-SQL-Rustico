@@ -13,20 +13,20 @@ pub struct Update{
 }
 
 impl Update{
-    pub fn new(table:String, query: &String) -> Self{
-        
+    pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
+
+        if !query.contains("WHERE") || !query.contains("SET"){
+            return Err(TypeError::InvalidSintax)
+        }
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>();
 
-         // Si no tiene WHERE tirar sintax error
+        let conditions = get_conditions(str[1].replace(',', " AND ").as_str())?;
+        let set = get_conditions(str[0].replace(',', " AND ").split("SET").collect::<Vec<&str>>()[1])?;
 
-            // funciona?
-
-          // Si no tiene SET tirar sintax error
-
-        Self {
-            conditions: get_conditions(str[1].replace(',', " AND ").as_str()),
-            set: get_conditions(str[0].replace(',', " AND ").split("SET").collect::<Vec<&str>>()[1])
-        }
+        Ok(Self {
+            conditions: conditions,
+            set: set
+        })
     }
 }
 
@@ -39,7 +39,7 @@ fn update_str(expresion: &Expresion, index: &String, actual: String) -> String{
             let act_vec = actual.split(",").collect::<Vec<&str>>();
             for (i, s) in index.replace("\n", "").split(",").enumerate(){
                 if s.to_string() == c.column_index{
-                    new_string.push_str(&c.value);
+                    new_string.push_str(&c.value.replace("'", ""));
                 }else{
                     new_string.push_str(act_vec[i]);
                 }
@@ -47,7 +47,7 @@ fn update_str(expresion: &Expresion, index: &String, actual: String) -> String{
             }
             new_string.pop();
             },
-        _ => print!("error"),
+        _ =>(),
     }
 
     new_string

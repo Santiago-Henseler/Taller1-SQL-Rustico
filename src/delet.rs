@@ -12,16 +12,18 @@ pub struct Delet{
 }
 
 impl Delet{
-    pub fn new(table:String, query: &String) -> Self{
+    pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
 
-        // Si no tiene WHERE tirar sintax error
-
-
-        Self {
-            conditions: get_conditions(str[1].split("WHERE").collect::<Vec<&str>>()[1].replace(',', " AND ").as_str()),
+        if !query.contains("WHERE"){
+            return Err(TypeError::InvalidSintax)
         }
+        let conditions =  get_conditions(str[1].split("WHERE").collect::<Vec<&str>>()[1].replace(',', " AND ").as_str())?;
+
+        Ok(Self {
+            conditions: conditions,
+        })
     }
 }
 

@@ -1,22 +1,21 @@
-use std::collections::HashMap;
-
 use crate::query;
+use crate::sort_condition::sort;
 use query::Query;
 use query::TypeError;
 use crate::condition;
 use condition::get_conditions;
 use condition::Expresion;
 use condition::evaluar;
-use crate::sortCondition;
-use sortCondition::SortExpresion;
-use sortCondition::make_sort_condition;
+use crate::sort_condition;
+use sort_condition::SortExpresion;
+use sort_condition::make_sort_condition;
 
 #[derive(Debug)]
 pub struct Select{
     conditions: Expresion,
     sort: bool,
     sort_conditions: SortExpresion,
-    lines: HashMap<String, String>
+    lines: Vec<String>
 }
 
 impl Select{
@@ -24,20 +23,38 @@ impl Select{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>()[1].split("ORDER BY").collect::<Vec<&str>>();
         let mut sort = false;
-        let mut sort_expresion = SortExpresion::None;
-        let mut hash: HashMap<String, String> = HashMap::new();
+        let mut sort_expresion: SortExpresion = SortExpresion::None;
+        let mut lines: Vec<String> = Vec::new();
+
+
+        //  Errores de sintaxis y seleccionar columnas 
+        //  
+        //
 
         if str.len() > 1{
             sort = true;
             sort_expresion = make_sort_condition(str[1]);
         }
 
+        let condition = get_conditions(str[0].replace(',', " AND ").as_str()).unwrap();
+
         Self {
-            conditions: get_conditions(str[0].replace(',', " AND ").as_str()),
+            conditions: condition,
             sort: sort,
             sort_conditions: sort_expresion,
-            lines: hash,
+            lines: lines,
         }
+    }
+
+    pub fn print(&mut self) -> Result<(), TypeError>{
+        if !self.sort {
+            return Ok(())
+        }
+        sort(&mut self.lines, &self.sort_conditions)?;
+        for i in self.lines.iter(){
+            println!("{}", &i);
+        }
+        Ok(())
     }
 }
 
@@ -54,18 +71,10 @@ impl Query for Select{
         match condition{
             true => {
                 if self.sort{
-                    let vec = actual.split(',').collect::<Vec<&str>>();
-                    let key = match &self.sort_conditions {
-                        SortExpresion::SortCondition(c) =>{
-                            if let Some(pos) = index.split(',').collect::<Vec<&str>>().iter().position(|&x| x == &c.column_index){
-                                vec[pos].to_string()
-                            }else{
-                                "".to_string()
-                            }
-                        },
-                        SortExpresion::None => "".to_string(),
-                    };
-                    self.lines.insert(key, actual);
+                    if self.lines.len() == 0{
+                        self.lines.push(index.to_owned());
+                    }
+                    self.lines.push(actual);
                 }else{
                     println!("{}", actual);
                 }

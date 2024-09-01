@@ -6,7 +6,6 @@ use std::io::Write;
 use crate::query;
 use query::Query;
 use query::TypeError;
-use query::parser_kv;
 
 #[derive(Debug)]
 pub struct Insert{
@@ -14,29 +13,39 @@ pub struct Insert{
 }
 
 impl Insert{
-    pub fn new(table:String, query: &String) -> Self{
+    pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
         let mut hash: HashMap<String, String> = HashMap::new();
 
-        let mut keys: Vec<String> = Vec::new();
-        let mut values: Vec<String> = Vec::new();
+        make_kv(&mut hash, str);
 
-        for (i, s) in str[1].split("VALUES").enumerate(){
-            match i {
-                0 => keys = parser_kv(s),
-                1 => values = parser_kv(s),
-                _ => (),
-            }
+        if !query.contains("VALUES") || hash.is_empty(){
+            return Err(TypeError::InvalidSintax)
         }
 
-        for i in 0..keys.len(){
-            hash.insert(keys[i].to_owned(), values[i].to_owned());
-        }
- 
-        Self {
+        Ok(Self {
             values: hash,
+        })
+    }
+
+}
+
+fn make_kv(hash: &mut HashMap<String,String>, str: Vec<&str>){
+
+    let mut keys: Vec<String> = Vec::new();
+    let mut values: Vec<String> = Vec::new();
+
+    for (i, s) in str[1].split("VALUES").enumerate(){
+        match i {
+            0 => keys = s.replace('(', "").replace(')', "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>(),
+            1 => values = s.replace('(', "").replace(')', "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>(),
+            _ => (),
         }
+    }
+
+    for i in 0..keys.len(){
+        hash.insert(keys[i].to_owned(), values[i].to_owned());
     }
 
 }
@@ -66,8 +75,20 @@ pub fn insert_reg(path: String, instance: &mut Insert)-> Result<(), TypeError>{
     let mut reader = BufReader::new(&file);
 
     let mut column_index = String::new();
-    reader.read_line(&mut column_index).map_err(|_| TypeError::Error)?;
+    reader.read_line(&mut column_index).map_err(|_| TypeError::FileError)?;
 
-    writeln!(file, "{}", instance.operate(&column_index, "".to_string())).map_err(|_| TypeError::Error)?;
+    writeln!(file, "{}", instance.operate(&column_index, "".to_string())).map_err(|_| TypeError::FileError)?;
     Ok(())
 }
+
+/* 
+#[test]
+fn instance_test() {
+    let instance: Insert = Insert::new("tabla1".to_string(), &"INSERT INTO tabla1 (id, id_cliente, producto, cantidad) VALUES (111, 6, 'Laptop', 3)".to_string()).unwrap();
+    
+    for i in vec!["id", "id_cliente", "producto", "cantidad"]{
+
+    }
+
+    assert_eq!(sorted, vec![2, 4, 5, 7]);
+}*/
