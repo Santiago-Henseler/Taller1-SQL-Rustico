@@ -17,6 +17,12 @@ impl Update{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>();
 
+         // Si no tiene WHERE tirar sintax error
+
+            // funciona?
+
+          // Si no tiene SET tirar sintax error
+
         Self {
             conditions: get_conditions(str[1].replace(',', " AND ").as_str()),
             set: get_conditions(str[0].replace(',', " AND ").split("SET").collect::<Vec<&str>>()[1])
@@ -48,7 +54,7 @@ fn update_str(expresion: &Expresion, index: &String, actual: String) -> String{
 }
 
 impl Query for Update{
-    fn operate(&self, index:&String, actual:String) -> String{
+    fn operate(&mut self, index:&String, actual:String) -> String{
 
         let condition: bool = match &self.conditions{
             Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", "")),

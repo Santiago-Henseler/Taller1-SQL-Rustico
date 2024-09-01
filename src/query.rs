@@ -2,6 +2,9 @@ use std::fs::OpenOptions;
 use std::io::{BufRead, BufReader};
 use std::io::Write;
 
+use crate::delet;
+use delet::Delet;
+
 #[derive(Debug)]
 pub enum TypeError{
     InvalidaTable,
@@ -11,7 +14,7 @@ pub enum TypeError{
 }
 
 pub trait Query{
-    fn operate(&self, column_index: &String, line: String)->String;
+    fn operate(&mut self, column_index: &String, line: String)->String;
 }
 
 pub fn parser_kv(str:&str) -> Vec<String>{
@@ -22,7 +25,7 @@ pub fn parser_kv(str:&str) -> Vec<String>{
     word.split(',').map(|s: &str| s.to_string().replace(" ", "")).collect::<Vec<String>>() 
 }
 
-pub fn mod_file(path:String, instance: Box<dyn Query>)-> Result<(), TypeError>{
+pub fn mod_file(path:String, instance: &mut Box<dyn Query>)-> Result<(), TypeError>{
     let file =  OpenOptions::new().read(true).open(&path).map_err(|_|  TypeError::InvalidaTable)?;
     let mut reader = BufReader::new(file);
 
@@ -37,7 +40,7 @@ pub fn mod_file(path:String, instance: Box<dyn Query>)-> Result<(), TypeError>{
     for line in reader.lines() {
         let line = line.map_err(|_| TypeError::Error)?;
         let new_line: String = instance.operate(&column_index, line);
-
+        
         if new_line != ""{
             writeln!(temp_file, "{}", new_line).map_err(|_|  TypeError::Error)?;
         }

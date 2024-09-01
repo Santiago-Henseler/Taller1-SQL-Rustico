@@ -42,7 +42,7 @@ impl Insert{
 }
 
 impl Query for Insert{
-    fn operate(&self, index:&String, _actual:String) -> String{
+    fn operate(&mut self, index:&String, _actual:String) -> String{
         let mut word: String = String::new();
 
         for s in index.replace("\n", "").split(","){
@@ -59,7 +59,7 @@ impl Query for Insert{
     }
 }
 
-pub fn insert_reg(path: String, instance: Insert)-> Result<(), TypeError>{
+pub fn insert_reg(path: String, instance: &mut Insert)-> Result<(), TypeError>{
 
     let mut file = OpenOptions::new().read(true).append(true).open(&path).map_err(|_|  TypeError::InvalidaTable)?;
 

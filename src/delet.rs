@@ -16,6 +16,9 @@ impl Delet{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
 
+        // Si no tiene WHERE tirar sintax error
+
+
         Self {
             conditions: get_conditions(str[1].split("WHERE").collect::<Vec<&str>>()[1].replace(',', " AND ").as_str()),
         }
@@ -23,7 +26,7 @@ impl Delet{
 }
 
 impl Query for Delet{
-    fn operate(&self, index:&String, actual:String) -> String{
+    fn operate(&mut self, index:&String, actual:String) -> String{
 
         let condition: bool = match &self.conditions{
             Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", "")),
