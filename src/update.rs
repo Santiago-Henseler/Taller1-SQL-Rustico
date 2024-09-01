@@ -50,6 +50,8 @@ fn update_str(expresion: &Expresion, index: &String, actual: String) -> String{
         _ =>(),
     }
 
+
+    println!("a");
     new_string
 }
 
@@ -68,4 +70,68 @@ impl Query for Update{
             false => actual,
         }
     }
+}
+
+#[test]
+fn sintax_error_test1() {
+    let str1 = String::from("UPDATE tabla1 id = 99 WHERE id_cliente = 1 ");
+    let try1: Result<Update, TypeError>  = Update::new("tabla1".to_string(), &str1);
+    
+    match try1{ 
+        Err(TypeError::InvalidSintax) => assert!(true),
+        _ => assert!(false)
+    }
+}
+
+#[test]
+fn sintax_error_test2(){
+    let str2 = String::from("UPDATE tabla1 SET WHERE id_cliente = 1");
+    let try2: Result<Update, TypeError>  = Update::new("tabla1".to_string(), &str2);
+    
+    match try2{ 
+        Err(TypeError::InvalidSintax) => assert!(true),
+        _ => assert!(false)
+    }
+}
+
+#[test]
+fn sintax_error_test3(){
+    let str3 = String::from("UPDATE tabla1 SET id = 99  id_cliente = 1");
+    let try3: Result<Update, TypeError>  = Update::new("tabla1".to_string(), &str3);
+    
+    match try3{ 
+        Err(TypeError::InvalidSintax) => assert!(true),
+        _ => assert!(false)
+    }
+}
+
+#[test]
+fn sintax_error_test4(){
+    let str4 = String::from("UPDATE tabla1 SET id = 99 WHERE dadadad");
+    let try4: Result<Update, TypeError>  = Update::new("tabla1".to_string(), &str4);
+    
+    match try4{ 
+        Err(TypeError::InvalidSintax) => assert!(true),
+        _ => assert!(false)
+    }
+}
+
+#[test]
+fn operate_test1(){
+    let str = String::from("UPDATE tabla1 SET id = 99 WHERE id_cliente = 1");
+    let mut instance:Update  = Update::new("tabla1".to_string(), &str).unwrap();
+
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1".to_string());
+
+    assert_eq!(word, "99,1,Laptop,1".to_string());
+}
+
+#[test]
+fn operate_test2(){
+    let str = String::from("UPDATE tabla1 SET id = 99 WHERE id_cliente = 3");
+    let mut instance:Update  = Update::new("tabla1".to_string(), &str).unwrap();
+    
+    let word = instance.operate(&"id, id_cliente, producto, cantidad".to_string(), "101,1,Laptop,1".to_string());
+
+    assert_eq!(word, "101,1,Laptop,1".to_string());
 }

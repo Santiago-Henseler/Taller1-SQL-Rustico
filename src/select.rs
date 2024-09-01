@@ -19,36 +19,38 @@ pub struct Select{
 }
 
 impl Select{
-    pub fn new(table:String, query: &String) -> Self{
+    pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
         
+        if !query.contains("WHERE"){
+            return Err(TypeError::InvalidSintax)
+        }
+
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>()[1].split("ORDER BY").collect::<Vec<&str>>();
         let mut sort = false;
         let mut sort_expresion: SortExpresion = SortExpresion::None;
         let mut lines: Vec<String> = Vec::new();
 
-
-        //  Errores de sintaxis y seleccionar columnas 
-        //  
-        //
-
         if str.len() > 1{
             sort = true;
-            sort_expresion = make_sort_condition(str[1]);
+            sort_expresion = make_sort_condition(str[1])?;
         }
 
-        let condition = get_conditions(str[0].replace(',', " AND ").as_str()).unwrap();
+        let condition = get_conditions(str[0].replace(',', " AND ").as_str())?;
 
-        Self {
+        Ok(Self {
             conditions: condition,
             sort: sort,
             sort_conditions: sort_expresion,
             lines: lines,
-        }
+        })
     }
 
     pub fn print(&mut self) -> Result<(), TypeError>{
         if !self.sort {
             return Ok(())
+        }
+        if self.lines.len() < 1{
+            return  Ok(())
         }
         sort(&mut self.lines, &self.sort_conditions)?;
         for i in self.lines.iter(){
@@ -81,7 +83,6 @@ impl Query for Select{
             },
             false => (),
         }
-
         "".to_string()
     }
 }

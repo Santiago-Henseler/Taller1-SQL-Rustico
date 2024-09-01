@@ -18,7 +18,7 @@ use query::TypeError;
 
 // TODO:
 // Agregar casos de error en los distintas cosas :)
-// SELECT algunas columnas
+// SELECT por algunas columnas
 // Agregar segunda condicion de sort 
 // modificar utilidades a la clase query
 // mejorar el get path
@@ -31,6 +31,7 @@ fn get_path(archivo: &str, dir:&String) -> String{
     path.push('/');
     path.push_str(archivo);
     path.push_str(".csv");
+
     path
 }
 
@@ -59,7 +60,7 @@ fn run(query: &String, dir:String) -> Result<(), TypeError>{
         },
         "SELECT" => {
             let path = get_path(vec[3], &dir);
-            let mut instance: Select = Select::new(vec[3].to_string(), query);
+            let mut instance: Select = Select::new(vec[3].to_string(), query)?;
             mod_file(path, &mut instance)?;
             instance.print()?;
             Ok(())
@@ -69,12 +70,20 @@ fn run(query: &String, dir:String) -> Result<(), TypeError>{
 
 }
 
-fn main()-> Result<(), TypeError>{
+fn main(){
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 3{
-        println!("INVALID_SYNTAX: El comando debe correrse como 'cargo run -- ruta/a/tablas <consulta>'" );
+        println!("InvalidSintax: El comando debe correrse como 'cargo run -- ruta/a/tablas <consulta>'" );
+        return;
     }
-    
-    run(&args[2], args[1].to_owned())
+
+    match run(&args[2].replace("\n", ""), args[1].to_owned()){
+        Err(TypeError::InvalidSintax) => println!("InvalidSintax: error en la sintaxis del comando"),
+        Err(TypeError::FileError) => println!("FileError: error al abri/leer/escribir un archivo"),
+        Err(TypeError::InvalidColumn) => println!("InvalidColumn: "),
+        Err(TypeError::InvalidaTable) => println!("InvalidaTable: tabla no encontrada"),
+        Err(TypeError::Error) => println!("Error"),
+        _ => (),
+    }
 }

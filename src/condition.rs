@@ -30,6 +30,10 @@ fn make_condition(str: &String) -> Result<Condicion, TypeError>{
 
     let strvec: Vec<&str> = str.trim().split_whitespace().collect::<Vec<&str>>();
 
+    if strvec.len() != 3{
+        return Err(TypeError::InvalidSintax)
+    }
+
     let op: Operador = match strvec[1] {
         "="  => Operador::Igual,
         ">=" => Operador::MayorOIgual,
@@ -65,6 +69,30 @@ pub fn get_conditions(condition: &str) -> Result<Expresion, TypeError>{
     }
 }
 
+fn cmp_str(compare:&String, actual: &String, operador:&Operador) -> bool{
+    let eval = match operador {
+        Operador::Igual => compare == actual,
+        Operador::Mayor => compare < actual,
+        Operador::MayorOIgual => compare <= actual,
+        Operador::Menor => compare > actual,
+        Operador::MenorOIgual => compare >= actual,
+        Operador::Error => false,
+    };
+    eval
+}
+
+fn cmp_int(compare:&isize, actual: &isize, operador:&Operador) -> bool{
+    let eval = match operador {
+        Operador::Igual => compare == actual,
+        Operador::Mayor => compare < actual,
+        Operador::MayorOIgual => compare <= actual,
+        Operador::Menor => compare > actual,
+        Operador::MenorOIgual => compare >= actual,
+        Operador::Error => false,
+    };
+    eval
+}
+
 pub fn evaluar(c: &Condicion, index:&String, actual: &String) -> bool{
 
     let mut eval = false;
@@ -72,13 +100,12 @@ pub fn evaluar(c: &Condicion, index:&String, actual: &String) -> bool{
 
     for (i, s) in index.replace("\n", "").split(",").enumerate(){
         if s.to_string() == c.column_index{
-            eval = match c.operador {
-                Operador::Igual => c.value == act_vec[i].to_string(),
-                Operador::Mayor => c.value > act_vec[i].to_string(),
-                Operador::MayorOIgual => c.value >= act_vec[i].to_string(),
-                Operador::Menor => c.value < act_vec[i].to_string(),
-                Operador::MenorOIgual => c.value <= act_vec[i].to_string(),
-                Operador::Error => false,
+            
+            if c.value.chars().all(|ch: char| ch.is_numeric()) && act_vec[i].chars().all(|c| c.is_numeric()){
+                eval = cmp_int(&c.value.parse::<isize>().unwrap_or(0), &act_vec[i].parse::<isize>().unwrap_or(0), &c.operador);
+
+            }else{
+                eval = cmp_str(&c.value, &act_vec[i].to_string(), &c.operador);
             }
         }
     }

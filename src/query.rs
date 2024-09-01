@@ -39,10 +39,12 @@ pub fn mod_file(path:String, instance: &mut dyn Query)-> Result<(), TypeError>{
         }
     }
 
+    /* 
+
     if cambio{
         fs::copy("tmp.csv", path).map_err(|_| TypeError::Error)?;
     }
     fs::remove_file("tmp.csv").map_err(|_|  TypeError::Error)?;
-
+*/
     Ok(())
 }

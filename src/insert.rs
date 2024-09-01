@@ -14,13 +14,17 @@ pub struct Insert{
 
 impl Insert{
     pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
+       
+        if !query.contains("VALUES"){
+            return Err(TypeError::InvalidSintax)
+        }
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
         let mut hash: HashMap<String, String> = HashMap::new();
 
-        make_kv(&mut hash, str);
+        make_kv(&mut hash, str)?;
 
-        if !query.contains("VALUES") || hash.is_empty(){
+        if hash.is_empty(){
             return Err(TypeError::InvalidSintax)
         }
 
@@ -31,7 +35,7 @@ impl Insert{
 
 }
 
-fn make_kv(hash: &mut HashMap<String,String>, str: Vec<&str>){
+fn make_kv(hash: &mut HashMap<String,String>, str: Vec<&str>) -> Result<(), TypeError>{
 
     let mut keys: Vec<String> = Vec::new();
     let mut values: Vec<String> = Vec::new();
@@ -44,10 +48,15 @@ fn make_kv(hash: &mut HashMap<String,String>, str: Vec<&str>){
         }
     }
 
+    if values[0] == "" || keys.len() < 2{
+        return Err(TypeError::InvalidSintax)
+    }
+
     for i in 0..keys.len(){
         hash.insert(keys[i].to_owned(), values[i].to_owned());
     }
 
+    Ok(())
 }
 
 impl Query for Insert{
@@ -71,7 +80,6 @@ impl Query for Insert{
 pub fn insert_reg(path: String, instance: &mut Insert)-> Result<(), TypeError>{
 
     let mut file = OpenOptions::new().read(true).append(true).open(&path).map_err(|_|  TypeError::InvalidaTable)?;
-
     let mut reader = BufReader::new(&file);
 
     let mut column_index = String::new();
@@ -81,14 +89,61 @@ pub fn insert_reg(path: String, instance: &mut Insert)-> Result<(), TypeError>{
     Ok(())
 }
 
-/* 
 #[test]
-fn instance_test() {
-    let instance: Insert = Insert::new("tabla1".to_string(), &"INSERT INTO tabla1 (id, id_cliente, producto, cantidad) VALUES (111, 6, 'Laptop', 3)".to_string()).unwrap();
+fn sintax_error_test1() {
+    let str1 = String::from("INSERT INTO tabla1 (id, id_cliente, producto, cantidad) VALUES ");
+    let try1: Result<Insert, TypeError>  = Insert::new("tabla1".to_string(), &str1);
     
-    for i in vec!["id", "id_cliente", "producto", "cantidad"]{
-
+    match try1{ 
+        Err(TypeError::InvalidSintax) => assert!(true),
+        _ => assert!(false)
     }
+}
 
-    assert_eq!(sorted, vec![2, 4, 5, 7]);
-}*/
+#[test]
+fn sintax_error_test2(){
+    let str2 = String::from("INSERT INTO tabla1 (id, id_cliente, producto, cantidad)  (id, id_cliente, producto, cantidad)");
+    let try2: Result<Insert, TypeError>  = Insert::new("tabla1".to_string(), &str2);
+    
+    match try2{ 
+        Err(TypeError::InvalidSintax) => assert!(true),
+        _ => assert!(false)
+    }
+}
+
+#[test]
+fn sintax_error_test3(){
+    let str3 = String::from("INSERT INTO tabla1 VALUES (id, id_cliente, producto, cantidad)");
+    let try3: Result<Insert, TypeError>  = Insert::new("tabla1".to_string(), &str3);
+    
+    match try3{ 
+        Err(TypeError::InvalidSintax) => assert!(true),
+        _ => assert!(false)
+    }
+}
+
+#[test]
+fn operate_test1(){
+    let str = String::from("INSERT INTO tabla1 (id, id_cliente, producto, cantidad) VALUES (id, id_cliente, producto, cantidad)");
+    let mut instance:Insert  = Insert::new("tabla1".to_string(), &str).unwrap();
+    
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string());
+
+    assert_eq!(word, "id,id_cliente,producto,cantidad".to_string());
+}
+
+#[test]
+fn operate_test2(){
+    let str = String::from("INSERT INTO tabla1 (id, id_cliente) VALUES (id, id_cliente)");
+    let mut instance:Insert  = Insert::new("tabla1".to_string(), &str).unwrap();
+    
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string());
+
+    assert_eq!(word, "id,id_cliente,NONE,NONE".to_string());
+}
+
+//crear este test
+#[test]
+fn insert_reg_test(){
+    assert!(true);
+}
