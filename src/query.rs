@@ -8,12 +8,11 @@ pub enum TypeError{
     InvalidaTable,
     InvalidSintax,
     InvalidColumn,
-    FileError,
     Error
 }
 
 pub trait Query{
-    fn operate(&mut self, column_index: &String, line: String)->String;
+    fn operate(&mut self, column_index: &String, line: String)-> Result<String, TypeError>;
 }
 
 pub fn mod_file(path:String, instance: &mut dyn Query)-> Result<(), TypeError>{
@@ -21,30 +20,28 @@ pub fn mod_file(path:String, instance: &mut dyn Query)-> Result<(), TypeError>{
     let mut reader = BufReader::new(file);
 
     let mut column_index = String::new();
-    reader.read_line(&mut column_index).map_err(|_|  TypeError::FileError)?;
+    reader.read_line(&mut column_index).map_err(|_|  TypeError::Error)?;
 
     column_index = column_index.replace("\n", "");
 
-    let mut temp_file = OpenOptions::new().write(true).create(true).open("tmp.csv").map_err(|_|  TypeError::FileError)?;
+    let mut temp_file = OpenOptions::new().write(true).create(true).open("tmp.csv").map_err(|_|  TypeError::Error)?;
     let mut cambio = false;
 
-    writeln!(temp_file, "{}", column_index).map_err(|_|  TypeError::FileError)?;
+    writeln!(temp_file, "{}", column_index).map_err(|_|  TypeError::Error)?;
     for line in reader.lines() {
-        let line = line.map_err(|_| TypeError::FileError)?;
-        let new_line: String = instance.operate(&column_index, line);
+        let line = line.map_err(|_| TypeError::Error)?;
+        let new_line: String = instance.operate(&column_index, line)?;
         
         if new_line != ""{
-            writeln!(temp_file, "{}", new_line).map_err(|_|  TypeError::FileError)?;
+            writeln!(temp_file, "{}", new_line).map_err(|_|  TypeError::Error)?;
             cambio = true;
         }
     }
-
-    /* 
-
+ 
     if cambio{
         fs::copy("tmp.csv", path).map_err(|_| TypeError::Error)?;
     }
     fs::remove_file("tmp.csv").map_err(|_|  TypeError::Error)?;
-*/
+
     Ok(())
 }

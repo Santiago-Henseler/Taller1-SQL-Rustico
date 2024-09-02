@@ -7,12 +7,19 @@ use crate::query;
 use query::Query;
 use query::TypeError;
 
+/// La representación e implementación del comando Insert de SQL
 #[derive(Debug)]
 pub struct Insert{
     values: HashMap<String, String>
 }
 
 impl Insert{
+    /// Crea la representación de Insert 
+    ///
+    /// Necesita recibir la tabla con la que va a operar y la query pedida
+    ///  
+    /// Devuelve Insert o InvalidSintax si la query no es valida
+    /// 
     pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
        
         if !query.contains("VALUES"){
@@ -21,8 +28,9 @@ impl Insert{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
         let mut hash: HashMap<String, String> = HashMap::new();
+        let s = str[1].split("VALUES").collect::<Vec<&str>>();
 
-        make_kv(&mut hash, str)?;
+        make_kv(&mut hash, &s)?;
 
         if hash.is_empty(){
             return Err(TypeError::InvalidSintax)
@@ -35,37 +43,42 @@ impl Insert{
 
 }
 
-fn make_kv(hash: &mut HashMap<String,String>, str: Vec<&str>) -> Result<(), TypeError>{
-
-    let mut keys: Vec<String> = Vec::new();
-    let mut values: Vec<String> = Vec::new();
-
-    for (i, s) in str[1].split("VALUES").enumerate(){
-        match i {
-            0 => keys = s.replace('(', "").replace(')', "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>(),
-            1 => values = s.replace('(', "").replace(')', "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>(),
-            _ => (),
-        }
-    }
-
+/// 
+/// Crea un hash con la columna y el valor a insertar
+/// 
+/// Si no puede crear el par columna-valor devuelve un error de InvalidSintax
+/// 
+pub fn make_kv(hash: &mut HashMap<String,String>, str: &Vec<&str>) -> Result<(), TypeError>{
+    
+    let keys = str[0].replace('(', "").replace(')', "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>();
+    let values = str[1].replace('(', "").replace(')', "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>();
+  
     if values[0] == "" || keys.len() < 2{
         return Err(TypeError::InvalidSintax)
     }
 
     for i in 0..keys.len(){
-        hash.insert(keys[i].to_owned(), values[i].to_owned());
+        hash.insert(keys[i].to_string(), values[i].to_string());
     }
 
     Ok(())
 }
 
+///
+/// La implementación de operate para Insert
+/// 
+/// Crea la nueva fila a insertar. Donde no encuentra valores para una columna inserta NONE
+/// Y si alguna columna no existe devuelve InvalidColumn
+/// 
 impl Query for Insert{
-    fn operate(&mut self, index:&String, _actual:String) -> String{
+    fn operate(&mut self, index:&String, _actual:String) -> Result<String, TypeError>{
         let mut word: String = String::new();
+        let mut i = 0;
 
         for s in index.replace("\n", "").split(","){
             if self.values.contains_key(s){
                 word.push_str(self.values.get(s).unwrap_or(&"".to_string()));
+                i += 1;
             }else{
                 word.push_str(&"NONE".to_string());
             }
@@ -73,19 +86,28 @@ impl Query for Insert{
         }
         word.pop();
 
-        word
+        if self.values.len() != i{
+            return Err(TypeError::InvalidColumn)
+        }
+
+        Ok(word)
     }
 }
 
+///
+/// Inserta al final de la tabla la nueva fila generada por operate
+/// 
+/// Si no logra insertarla devuelve el tipo de error correspondiente
+/// 
 pub fn insert_reg(path: String, instance: &mut Insert)-> Result<(), TypeError>{
 
     let mut file = OpenOptions::new().read(true).append(true).open(&path).map_err(|_|  TypeError::InvalidaTable)?;
     let mut reader = BufReader::new(&file);
 
     let mut column_index = String::new();
-    reader.read_line(&mut column_index).map_err(|_| TypeError::FileError)?;
+    reader.read_line(&mut column_index).map_err(|_| TypeError::Error)?;
 
-    writeln!(file, "{}", instance.operate(&column_index, "".to_string())).map_err(|_| TypeError::FileError)?;
+    writeln!(file, "{}", instance.operate(&column_index, "".to_string())?).map_err(|_| TypeError::Error)?;
     Ok(())
 }
 
@@ -127,7 +149,7 @@ fn operate_test1(){
     let str = String::from("INSERT INTO tabla1 (id, id_cliente, producto, cantidad) VALUES (id, id_cliente, producto, cantidad)");
     let mut instance:Insert  = Insert::new("tabla1".to_string(), &str).unwrap();
     
-    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string());
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string()).unwrap();
 
     assert_eq!(word, "id,id_cliente,producto,cantidad".to_string());
 }
@@ -137,9 +159,22 @@ fn operate_test2(){
     let str = String::from("INSERT INTO tabla1 (id, id_cliente) VALUES (id, id_cliente)");
     let mut instance:Insert  = Insert::new("tabla1".to_string(), &str).unwrap();
     
-    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string());
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string()).unwrap();
 
     assert_eq!(word, "id,id_cliente,NONE,NONE".to_string());
+}
+
+#[test]
+fn operate_test3(){
+    let str = String::from("INSERT INTO tabla1 (id, calves) VALUES (id, id_cliente)");
+    let mut instance:Insert  = Insert::new("tabla1".to_string(), &str).unwrap();
+    
+    let word: Result<String, TypeError> = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string());
+
+    match word {
+        Err(TypeError::InvalidColumn) => assert!(true),
+        _=> assert!(false),
+    }
 }
 
 //crear este test

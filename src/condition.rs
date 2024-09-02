@@ -23,7 +23,8 @@ pub enum Expresion{
     Condicion(Condicion),
     And((Condicion, Condicion)),
     Or((Condicion, Condicion)),
-    Not(Condicion)
+    Not(Condicion),
+    All,
 }
 
 fn make_condition(str: &String) -> Result<Condicion, TypeError>{
@@ -93,21 +94,27 @@ fn cmp_int(compare:&isize, actual: &isize, operador:&Operador) -> bool{
     eval
 }
 
-pub fn evaluar(c: &Condicion, index:&String, actual: &String) -> bool{
+pub fn evaluar(c: &Condicion, index:&String, actual: &String) -> Result<bool, TypeError>{
 
     let mut eval = false;
     let act_vec = actual.split(",").collect::<Vec<&str>>();
 
+    println!("{}",c.column_index);
+
+    let mut column_exist = false;
     for (i, s) in index.replace("\n", "").split(",").enumerate(){
         if s.to_string() == c.column_index{
-            
+            column_exist = true;
             if c.value.chars().all(|ch: char| ch.is_numeric()) && act_vec[i].chars().all(|c| c.is_numeric()){
                 eval = cmp_int(&c.value.parse::<isize>().unwrap_or(0), &act_vec[i].parse::<isize>().unwrap_or(0), &c.operador);
-
             }else{
                 eval = cmp_str(&c.value, &act_vec[i].to_string(), &c.operador);
             }
         }
     }
-    eval
+    if !column_exist{
+        return  Err(TypeError::InvalidColumn)
+    }
+
+    Ok(eval)
 }

@@ -17,8 +17,7 @@ use query::mod_file;
 use query::TypeError;
 
 // TODO:
-// Agregar casos de error en los distintas cosas :)
-// SELECT por algunas columnas
+// Agregar mejores prints de error
 // Agregar segunda condicion de sort 
 // modificar utilidades a la clase query
 // mejorar el get path
@@ -59,15 +58,15 @@ fn run(query: &String, dir:String) -> Result<(), TypeError>{
             Ok(())
         },
         "SELECT" => {
-            let path = get_path(vec[3], &dir);
-            let mut instance: Select = Select::new(vec[3].to_string(), query)?;
+            let tabla = query.split("FROM").collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>()[0].replace(" ", "");
+            let path = get_path(&tabla, &dir);
+            let mut instance: Select = Select::new(tabla.to_string(), query)?;
             mod_file(path, &mut instance)?;
             instance.print()?;
             Ok(())
         },
         _ => Err(TypeError::InvalidSintax),
     }
-
 }
 
 fn main(){
@@ -79,11 +78,10 @@ fn main(){
     }
 
     match run(&args[2].replace("\n", ""), args[1].to_owned()){
-        Err(TypeError::InvalidSintax) => println!("InvalidSintax: error en la sintaxis del comando"),
-        Err(TypeError::FileError) => println!("FileError: error al abri/leer/escribir un archivo"),
-        Err(TypeError::InvalidColumn) => println!("InvalidColumn: "),
-        Err(TypeError::InvalidaTable) => println!("InvalidaTable: tabla no encontrada"),
-        Err(TypeError::Error) => println!("Error"),
+        Err(TypeError::InvalidSintax) => println!("InvalidSintax: existe un error en la sintaxis del comando"),
+        Err(TypeError::Error) => println!("Error: ocurrio un problema al abri/leer/escribir un archivo"),
+        Err(TypeError::InvalidColumn) => println!("InvalidColumn: la columna no existe en la tabla"),
+        Err(TypeError::InvalidaTable) => println!("InvalidaTable: la tabla no fue encontrada"),
         _ => (),
     }
 }

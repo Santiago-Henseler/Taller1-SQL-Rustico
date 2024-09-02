@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SortExpresion"],"fn":["es_mayor","make_sort_condition","sort"],"struct":["SortCondition"]};
