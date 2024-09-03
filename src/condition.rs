@@ -1,6 +1,6 @@
 use crate::query::TypeError;
 
-
+/// La representación e implementación de las expresiones de busqueda
 #[derive(Debug)]
 pub enum Operador {
     Mayor,
@@ -27,6 +27,10 @@ pub enum Expresion{
     All,
 }
 
+/// 
+/// Crea la Condicion de busqueda
+/// Si no se puede crear devuelve InvalidSintax.
+/// 
 fn make_condition(str: &String) -> Result<Condicion, TypeError>{
 
     let strvec: Vec<&str> = str.trim().split_whitespace().collect::<Vec<&str>>();
@@ -54,6 +58,10 @@ fn make_condition(str: &String) -> Result<Condicion, TypeError>{
     }
 }
 
+/// 
+/// Crea la Expresion de busqueda
+/// Si no se puede crear devuelve InvalidSintax.
+/// 
 pub fn get_conditions(condition: &str) -> Result<Expresion, TypeError>{
 
     if condition.contains("AND"){
@@ -70,6 +78,9 @@ pub fn get_conditions(condition: &str) -> Result<Expresion, TypeError>{
     }
 }
 
+/// 
+/// Compara los Stings recibidos
+/// 
 fn cmp_str(compare:&String, actual: &String, operador:&Operador) -> bool{
     let eval = match operador {
         Operador::Igual => compare == actual,
@@ -82,6 +93,9 @@ fn cmp_str(compare:&String, actual: &String, operador:&Operador) -> bool{
     eval
 }
 
+/// 
+/// Compara los enteros recibidos
+/// 
 fn cmp_int(compare:&isize, actual: &isize, operador:&Operador) -> bool{
     let eval = match operador {
         Operador::Igual => compare == actual,
@@ -94,12 +108,14 @@ fn cmp_int(compare:&isize, actual: &isize, operador:&Operador) -> bool{
     eval
 }
 
+/// 
+/// Evalua la Condicion de busqueda
+/// Si no se encuentra la columna a comparar devuelve InvalidColumn
+/// 
 pub fn evaluar(c: &Condicion, index:&String, actual: &String) -> Result<bool, TypeError>{
 
     let mut eval = false;
     let act_vec = actual.split(",").collect::<Vec<&str>>();
-
-    println!("{}",c.column_index);
 
     let mut column_exist = false;
     for (i, s) in index.replace("\n", "").split(",").enumerate(){

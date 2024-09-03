@@ -17,11 +17,9 @@ use query::mod_file;
 use query::TypeError;
 
 // TODO:
-// Agregar mejores prints de error
 // Agregar segunda condicion de sort 
-// modificar utilidades a la clase query
-// mejorar el get path
-// hacer test y documentar codigo
+// Poder tener varias condiciones dentro de condition
+// hacer test
 
 fn get_path(archivo: &str, dir:&String) -> String{
 
@@ -69,6 +67,27 @@ fn run(query: &String, dir:String) -> Result<(), TypeError>{
     }
 }
 
+fn show_error(query: &String){
+    let vec: Vec<&str> = query.trim().split_whitespace().collect::<Vec<&str>>();
+
+    match vec[0] {
+        "INSERT" => {
+            println!("El comando se debe ejecutar como 'INSERT INTO tabla (col_0, col_1, col_2, col3) VALUES (new_0, new_1, new_2, new_3)'")
+        },
+        "UPDATE" => {
+            println!("El comando se debe ejecutar como 'UPDATE tabla SET col_0 = new_value WHERE col_1 = value'")
+        },
+        "DELETE" => {   
+            println!("El comando se debe ejecutar como 'DELETE FROM tabla WHERE col_1 = value'")
+        },
+        "SELECT" => {
+            println!("El comando se debe ejecutar como 'SELECT col_0, col_1 FROM tabla WHERE col_1 = value ORDER BY col_1 ASC'")
+            
+        },
+        _ => println!("Comando inexistente los comandos son SELECT UPDATE DELETE INSERT"),
+    }
+}
+
 fn main(){
     let args: Vec<String> = env::args().collect();
 
@@ -78,8 +97,8 @@ fn main(){
     }
 
     match run(&args[2].replace("\n", ""), args[1].to_owned()){
-        Err(TypeError::InvalidSintax) => println!("InvalidSintax: existe un error en la sintaxis del comando"),
-        Err(TypeError::Error) => println!("Error: ocurrio un problema al abri/leer/escribir un archivo"),
+        Err(TypeError::InvalidSintax) => {print!("InvalidSintax: "); show_error(&args[2].replace("\n", ""))},
+        Err(TypeError::Error) => println!("Error: ocurrio un problema al abri/leer/escribir un archivo intentelo nuevamente"),
         Err(TypeError::InvalidColumn) => println!("InvalidColumn: la columna no existe en la tabla"),
         Err(TypeError::InvalidaTable) => println!("InvalidaTable: la tabla no fue encontrada"),
         _ => (),

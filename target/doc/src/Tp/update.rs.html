@@ -135,7 +135,44 @@
 <a href="#135" id="135">135</a>
 <a href="#136" id="136">136</a>
 <a href="#137" id="137">137</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::query;
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span><span class="kw">crate</span>::query;
 <span class="kw">use </span><span class="kw">crate</span>::condition;
 <span class="kw">use </span>query::Query;
 <span class="kw">use </span>query::TypeError;
@@ -143,68 +180,101 @@
 <span class="kw">use </span>condition::Expresion;
 <span class="kw">use </span>condition::evaluar;
 
-<span class="attr">#[derive(Debug)]
+
+<span class="doccomment">/// La representación e implementación del comando Update de SQL
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>Update{
     conditions: Expresion,
-    set: Expresion,
+    set: HashMap&lt;String,String&gt;,
+}
+
+<span class="doccomment">/// 
+/// Crea un hash con la columna y el valor a actualizar
+/// 
+/// Si no puede crear el par columna-valor devuelve un error de InvalidSintax
+/// 
+</span><span class="kw">fn </span>make_kv(hash: <span class="kw-2">&amp;mut </span>HashMap&lt;String,String&gt;, str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeError&gt;{
+   
+    <span class="kw">for </span>s <span class="kw">in </span>str.split(<span class="string">','</span>){
+        <span class="kw">let </span>vecs = s.split(<span class="string">'='</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+        <span class="kw">if </span>vecs.len() != <span class="number">2</span>{
+            <span class="kw">return  </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax)
+        }
+        hash.insert(vecs[<span class="number">0</span>].to_string().replace(<span class="string">" "</span>, <span class="string">""</span>), vecs[<span class="number">1</span>].to_string().replace(<span class="string">" "</span>, <span class="string">""</span>).replace(<span class="string">"'"</span>, <span class="string">""</span>));
+    }
+
+    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">impl </span>Update{
-    <span class="kw">pub fn </span>new(table:String, query: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, TypeError&gt;{
+    <span class="doccomment">/// Crea la representación de Update 
+    ///
+    /// Necesita recibir la tabla con la que va a operar y la query pedida
+    ///  
+    /// Devuelve Update o InvalidSintax si la query no es valida
+    /// 
+    </span><span class="kw">pub fn </span>new(table:String, query: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, TypeError&gt;{
 
         <span class="kw">if </span>!query.contains(<span class="string">"WHERE"</span>) || !query.contains(<span class="string">"SET"</span>){
             <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax)
         }
         <span class="kw">let </span>str: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.split(<span class="kw-2">&amp;</span>table).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>].split(<span class="string">"WHERE"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
 
-        <span class="kw">let </span>conditions = get_conditions(str[<span class="number">1</span>].replace(<span class="string">','</span>, <span class="string">" AND "</span>).as_str())<span class="question-mark">?</span>;
-        <span class="kw">let </span>set = get_conditions(str[<span class="number">0</span>].replace(<span class="string">','</span>, <span class="string">" AND "</span>).split(<span class="string">"SET"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>])<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>hash: HashMap&lt;String, String&gt; = HashMap::new();
+        make_kv(<span class="kw-2">&amp;mut </span>hash, <span class="kw-2">&amp;</span>str[<span class="number">0</span>].split(<span class="string">"SET"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>])<span class="question-mark">?</span>;
 
+        <span class="kw">let </span>conditions = get_conditions(str[<span class="number">1</span>].replace(<span class="string">','</span>, <span class="string">" AND "</span>).as_str())<span class="question-mark">?</span>;
+ 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
             conditions: conditions,
-            set: set
+            set: hash
         })
     }
 }
 
-<span class="kw">fn </span>update_str(expresion: <span class="kw-2">&amp;</span>Expresion, index: <span class="kw-2">&amp;</span>String, actual: String) -&gt; String{
+<span class="doccomment">///
+/// Recibe la expresión y la fila a modificar
+/// 
+/// Devuelve la fila modificada 
+/// 
+</span><span class="kw">fn </span>update_str(hash: <span class="kw-2">&amp;</span>HashMap&lt;String,String&gt;, index: <span class="kw-2">&amp;</span>String, actual: String) -&gt; <span class="prelude-ty">Result</span>&lt;String, TypeError&gt;{
 
     <span class="kw">let </span><span class="kw-2">mut </span>new_string: String = String::from(<span class="string">""</span>);
 
-    <span class="kw">match </span>expresion{
-        Expresion::Condicion(c) =&gt; {
-            <span class="kw">let </span>act_vec = actual.split(<span class="string">","</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
-            <span class="kw">for </span>(i, s) <span class="kw">in </span>index.replace(<span class="string">"\n"</span>, <span class="string">""</span>).split(<span class="string">","</span>).enumerate(){
-                <span class="kw">if </span>s.to_string() == c.column_index{
-                    new_string.push_str(<span class="kw-2">&amp;</span>c.value.replace(<span class="string">"'"</span>, <span class="string">""</span>));
-                }<span class="kw">else</span>{
-                    new_string.push_str(act_vec[i]);
-                }
-                new_string.push(<span class="string">','</span>);
-            }
-            new_string.pop();
-            },
-        <span class="kw">_ </span>=&gt;(),
+    <span class="kw">let </span>act_vec = actual.split(<span class="string">","</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+    <span class="kw">for </span>(i, col) <span class="kw">in </span>index.replace(<span class="string">"\n"</span>, <span class="string">""</span>).split(<span class="string">","</span>).enumerate(){
+        <span class="kw">if </span>hash.contains_key(<span class="kw-2">&amp;</span>col.to_string()){
+            new_string.push_str(hash.get(<span class="kw-2">&amp;</span>col.to_string()).unwrap_or(<span class="kw-2">&amp;</span><span class="string">""</span>.to_string()));
+        }<span class="kw">else</span>{
+            new_string.push_str(act_vec[i]);
+        }
+        new_string.push(<span class="string">','</span>);
     }
+    new_string.pop();
 
-
-    <span class="macro">println!</span>(<span class="string">"a"</span>);
-    new_string
+    <span class="prelude-val">Ok</span>(new_string)
 }
 
-<span class="kw">impl </span>Query <span class="kw">for </span>Update{
-    <span class="kw">fn </span>operate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index:<span class="kw-2">&amp;</span>String, actual:String) -&gt; String{
+<span class="doccomment">///
+/// La implementación de operate para Update
+/// 
+/// Si se cumple la condición para actualizar la fila usa update_str y devuelve la fila cambiada.
+/// Si no devuelve la fila sin modificarla
+/// 
+</span><span class="kw">impl </span>Query <span class="kw">for </span>Update{
+    <span class="kw">fn </span>operate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index:<span class="kw-2">&amp;</span>String, actual:String) -&gt; <span class="prelude-ty">Result</span>&lt;String, TypeError&gt;{
 
         <span class="kw">let </span>condition: bool = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.conditions{
-            Expresion::Condicion(c) =&gt; evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::And((c_izq, c_der)) =&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)) &amp;&amp; evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::Not(c) =&gt; !evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::Or((c_izq, c_der))=&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)) || evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
+            Expresion::Condicion(c) =&gt; evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::And((c_izq, c_der)) =&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">? </span>&amp;&amp; evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::Not(c) =&gt; !evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::Or((c_izq, c_der))=&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">? </span>|| evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::All =&gt; <span class="bool-val">true</span>,
         };
 
         <span class="kw">match </span>condition{
             <span class="bool-val">true </span>=&gt; update_str(<span class="kw-2">&amp;</span><span class="self">self</span>.set, index, actual),
-            <span class="bool-val">false </span>=&gt; actual,
+            <span class="bool-val">false </span>=&gt; <span class="prelude-val">Ok</span>(actual),
         }
     }
 }
@@ -255,12 +325,12 @@
 
 <span class="attr">#[test]
 </span><span class="kw">fn </span>operate_test1(){
-    <span class="kw">let </span>str = String::from(<span class="string">"UPDATE tabla1 SET id = 99 WHERE id_cliente = 1"</span>);
+    <span class="kw">let </span>str = String::from(<span class="string">"UPDATE tabla1 SET id = 99, id_cliente = 10 WHERE id_cliente = 1"</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>instance:Update  = Update::new(<span class="string">"tabla1"</span>.to_string(), <span class="kw-2">&amp;</span>str).unwrap();
 
-    <span class="kw">let </span>word = instance.operate(<span class="kw-2">&amp;</span><span class="string">"id,id_cliente,producto,cantidad"</span>.to_string(), <span class="string">"101,1,Laptop,1"</span>.to_string());
+    <span class="kw">let </span>word = instance.operate(<span class="kw-2">&amp;</span><span class="string">"id,id_cliente,producto,cantidad"</span>.to_string(), <span class="string">"101,1,Laptop,1"</span>.to_string()).unwrap();
 
-    <span class="macro">assert_eq!</span>(word, <span class="string">"99,1,Laptop,1"</span>.to_string());
+    <span class="macro">assert_eq!</span>(word, <span class="string">"99,10,Laptop,1"</span>.to_string());
 }
 
 <span class="attr">#[test]
@@ -268,7 +338,7 @@
     <span class="kw">let </span>str = String::from(<span class="string">"UPDATE tabla1 SET id = 99 WHERE id_cliente = 3"</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>instance:Update  = Update::new(<span class="string">"tabla1"</span>.to_string(), <span class="kw-2">&amp;</span>str).unwrap();
     
-    <span class="kw">let </span>word = instance.operate(<span class="kw-2">&amp;</span><span class="string">"id, id_cliente, producto, cantidad"</span>.to_string(), <span class="string">"101,1,Laptop,1"</span>.to_string());
+    <span class="kw">let </span>word = instance.operate(<span class="kw-2">&amp;</span><span class="string">"id,id_cliente,producto,cantidad"</span>.to_string(), <span class="string">"101,1,Laptop,1"</span>.to_string()).unwrap();
 
     <span class="macro">assert_eq!</span>(word, <span class="string">"101,1,Laptop,1"</span>.to_string());
 }</code></pre></div></section></main></body></html>

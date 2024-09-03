@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Select"]};
+window.SIDEBAR_ITEMS = {"fn":["select_columns"],"struct":["Select"]};

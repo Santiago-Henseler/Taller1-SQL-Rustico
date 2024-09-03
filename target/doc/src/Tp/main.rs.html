@@ -87,6 +87,23 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::env;
 
 <span class="kw">mod </span>insert;
@@ -106,12 +123,9 @@
 <span class="kw">use </span>query::TypeError;
 
 <span class="comment">// TODO:
-// Agregar casos de error en los distintas cosas :)
-// SELECT por algunas columnas
+// Agregar mejores prints de error
 // Agregar segunda condicion de sort 
-// modificar utilidades a la clase query
-// mejorar el get path
-// hacer test y documentar codigo
+// hacer test
 
 </span><span class="kw">fn </span>get_path(archivo: <span class="kw-2">&amp;</span>str, dir:<span class="kw-2">&amp;</span>String) -&gt; String{
 
@@ -148,15 +162,36 @@
             <span class="prelude-val">Ok</span>(())
         },
         <span class="string">"SELECT" </span>=&gt; {
-            <span class="kw">let </span>path = get_path(vec[<span class="number">3</span>], <span class="kw-2">&amp;</span>dir);
-            <span class="kw">let </span><span class="kw-2">mut </span>instance: Select = Select::new(vec[<span class="number">3</span>].to_string(), query)<span class="question-mark">?</span>;
+            <span class="kw">let </span>tabla = query.split(<span class="string">"FROM"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>].split(<span class="string">"WHERE"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">0</span>].replace(<span class="string">" "</span>, <span class="string">""</span>);
+            <span class="kw">let </span>path = get_path(<span class="kw-2">&amp;</span>tabla, <span class="kw-2">&amp;</span>dir);
+            <span class="kw">let </span><span class="kw-2">mut </span>instance: Select = Select::new(tabla.to_string(), query)<span class="question-mark">?</span>;
             mod_file(path, <span class="kw-2">&amp;mut </span>instance)<span class="question-mark">?</span>;
             instance.print()<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(())
         },
         <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(TypeError::InvalidSintax),
     }
+}
 
+<span class="kw">fn </span>show_error(query: <span class="kw-2">&amp;</span>String){
+    <span class="kw">let </span>vec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.trim().split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+
+    <span class="kw">match </span>vec[<span class="number">0</span>] {
+        <span class="string">"INSERT" </span>=&gt; {
+            <span class="macro">println!</span>(<span class="string">"El comando se debe ejecutar como 'INSERT INTO tabla (col_0, col_1, col_2, col3) VALUES (new_0, new_1, new_2, new_3)'"</span>)
+        },
+        <span class="string">"UPDATE" </span>=&gt; {
+            <span class="macro">println!</span>(<span class="string">"El comando se debe ejecutar como 'UPDATE tabla SET col_0 = new_value WHERE col_1 = value'"</span>)
+        },
+        <span class="string">"DELETE" </span>=&gt; {   
+            <span class="macro">println!</span>(<span class="string">"El comando se debe ejecutar como 'DELETE FROM tabla WHERE col_1 = value'"</span>)
+        },
+        <span class="string">"SELECT" </span>=&gt; {
+            <span class="macro">println!</span>(<span class="string">"El comando se debe ejecutar como 'SELECT col_0, col_1 FROM tabla WHERE col_1 = value ORDER BY col_1 ASC'"</span>)
+            
+        },
+        <span class="kw">_ </span>=&gt; <span class="macro">println!</span>(<span class="string">"Comando inexistente los comandos son SELECT UPDATE DELETE INSERT"</span>),
+    }
 }
 
 <span class="kw">fn </span>main(){
@@ -168,11 +203,10 @@
     }
 
     <span class="kw">match </span>run(<span class="kw-2">&amp;</span>args[<span class="number">2</span>].replace(<span class="string">"\n"</span>, <span class="string">""</span>), args[<span class="number">1</span>].to_owned()){
-        <span class="prelude-val">Err</span>(TypeError::InvalidSintax) =&gt; <span class="macro">println!</span>(<span class="string">"InvalidSintax: error en la sintaxis del comando"</span>),
-        <span class="prelude-val">Err</span>(TypeError::FileError) =&gt; <span class="macro">println!</span>(<span class="string">"FileError: error al abri/leer/escribir un archivo"</span>),
-        <span class="prelude-val">Err</span>(TypeError::InvalidColumn) =&gt; <span class="macro">println!</span>(<span class="string">"InvalidColumn: "</span>),
-        <span class="prelude-val">Err</span>(TypeError::InvalidaTable) =&gt; <span class="macro">println!</span>(<span class="string">"InvalidaTable: tabla no encontrada"</span>),
-        <span class="prelude-val">Err</span>(TypeError::Error) =&gt; <span class="macro">println!</span>(<span class="string">"Error"</span>),
+        <span class="prelude-val">Err</span>(TypeError::InvalidSintax) =&gt; {<span class="macro">print!</span>(<span class="string">"InvalidSintax: "</span>); show_error(<span class="kw-2">&amp;</span>args[<span class="number">2</span>].replace(<span class="string">"\n"</span>, <span class="string">""</span>))},
+        <span class="prelude-val">Err</span>(TypeError::Error) =&gt; <span class="macro">println!</span>(<span class="string">"Error: ocurrio un problema al abri/leer/escribir un archivo intentelo nuevamente"</span>),
+        <span class="prelude-val">Err</span>(TypeError::InvalidColumn) =&gt; <span class="macro">println!</span>(<span class="string">"InvalidColumn: la columna no existe en la tabla"</span>),
+        <span class="prelude-val">Err</span>(TypeError::InvalidaTable) =&gt; <span class="macro">println!</span>(<span class="string">"InvalidaTable: la tabla no fue encontrada"</span>),
         <span class="kw">_ </span>=&gt; (),
     }
 }

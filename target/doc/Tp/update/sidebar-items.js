@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["update_str"],"struct":["Update"]};
+window.SIDEBAR_ITEMS = {"fn":["make_kv","update_str"],"struct":["Update"]};

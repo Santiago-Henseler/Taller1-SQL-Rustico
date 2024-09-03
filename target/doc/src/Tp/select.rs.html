@@ -87,6 +87,100 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::query;
 <span class="kw">use </span><span class="kw">crate</span>::sort_condition::sort;
 <span class="kw">use </span>query::Query;
@@ -99,8 +193,10 @@
 <span class="kw">use </span>sort_condition::SortExpresion;
 <span class="kw">use </span>sort_condition::make_sort_condition;
 
-<span class="attr">#[derive(Debug)]
+<span class="doccomment">/// La representación e implementación del comando Select de SQL
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>Select{
+    columns: Vec&lt;String&gt;,
     conditions: Expresion,
     sort: bool,
     sort_conditions: SortExpresion,
@@ -108,31 +204,42 @@
 }
 
 <span class="kw">impl </span>Select{
-    <span class="kw">pub fn </span>new(table:String, query: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, TypeError&gt;{
+    <span class="doccomment">/// Crea la representación de Select 
+    ///
+    /// Necesita recibir la tabla con la que va a operar y la query pedida
+    ///  
+    /// Devuelve Select o InvalidSintax si la query no es valida
+    /// 
+    </span><span class="kw">pub fn </span>new(table:String, query: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, TypeError&gt;{
         
-        <span class="comment">// PUEDE NO TENER WHERE
-        </span><span class="kw">if </span>!query.contains(<span class="string">"WHERE"</span>){
-            <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax)
-        }
+        <span class="kw">if </span>!query.contains(<span class="string">"FROM"</span>) || table == <span class="string">""</span>{ <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax)};
 
-        <span class="kw">let </span>str: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.split(<span class="kw-2">&amp;</span>table).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>].split(<span class="string">"WHERE"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>].split(<span class="string">"ORDER BY"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+        <span class="kw">let </span><span class="kw-2">mut </span>str: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.split(<span class="kw-2">&amp;</span>table).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+        <span class="kw">let </span><span class="kw-2">mut </span>conditions: Expresion = Expresion::All;
         <span class="kw">let </span><span class="kw-2">mut </span>sort = <span class="bool-val">false</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>sort_expresion: SortExpresion = SortExpresion::None;
+        <span class="kw">let </span><span class="kw-2">mut </span>sort_conditions: SortExpresion = SortExpresion::None;
         <span class="kw">let </span><span class="kw-2">mut </span>lines: Vec&lt;String&gt; = Vec::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>columns = Vec::new();
 
-        <span class="kw">if </span>str.len() &gt; <span class="number">1</span>{
+        <span class="kw">let </span>str_columns = str[<span class="number">0</span>].split(<span class="string">"SELECT"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>].split(<span class="string">"FROM"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">0</span>].replace(<span class="string">" "</span>, <span class="string">""</span>);
+
+        <span class="kw">if </span>str_columns == <span class="string">""</span>{ <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax)};
+
+        <span class="kw">if </span>str_columns != <span class="string">"*"</span>{columns = str_columns.split(<span class="string">","</span>).map(|s| s.to_string()).collect::&lt;Vec&lt;String&gt;&gt;();}
+
+        <span class="kw">if </span>query.contains(<span class="string">"WHERE"</span>){
+            str = str[<span class="number">1</span>].split(<span class="string">"WHERE"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>].split(<span class="string">"ORDER BY"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+            conditions = get_conditions(str[<span class="number">0</span>].replace(<span class="string">','</span>, <span class="string">" AND "</span>).as_str())<span class="question-mark">?</span>;
+            <span class="kw">if </span>str.len() &gt; <span class="number">1</span>{
+                sort = <span class="bool-val">true</span>;
+                sort_conditions = make_sort_condition(str[<span class="number">1</span>])<span class="question-mark">?</span>;
+            }
+        }<span class="kw">else if </span>query.contains(<span class="string">"ORDER BY"</span>){
             sort = <span class="bool-val">true</span>;
-            sort_expresion = make_sort_condition(str[<span class="number">1</span>])<span class="question-mark">?</span>;
+            sort_conditions = make_sort_condition(str[<span class="number">1</span>].split(<span class="string">"ORDER BY"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>])<span class="question-mark">?</span>;
         }
 
-        <span class="kw">let </span>condition = get_conditions(str[<span class="number">0</span>].replace(<span class="string">','</span>, <span class="string">" AND "</span>).as_str())<span class="question-mark">?</span>;
-
-        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            conditions: condition,
-            sort: sort,
-            sort_conditions: sort_expresion,
-            lines: lines,
-        })
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span>{columns,conditions,sort, sort_conditions,lines,})
     }
 
     <span class="kw">pub fn </span>print(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeError&gt;{
@@ -150,30 +257,111 @@
     }
 }
 
-<span class="kw">impl </span>Query <span class="kw">for </span>Select{
-    <span class="kw">fn </span>operate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index:<span class="kw-2">&amp;</span>String, actual:String) -&gt; String{
+<span class="doccomment">///
+/// Selecciona las columnas de la fila actual y las guarda devuelve en un String.
+/// Si no devuelve un InvalidColumn.
+/// 
+</span><span class="kw">fn </span>select_columns(actual: String, columns: <span class="kw-2">&amp;</span>Vec&lt;String&gt;, index: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;String, TypeError&gt;{
+
+    <span class="kw">if </span>columns.len() == <span class="number">0</span>{
+        <span class="kw">return </span><span class="prelude-val">Ok</span>(actual)
+    }
+
+    <span class="kw">let </span><span class="kw-2">mut </span>new_string: String = String::from(<span class="string">""</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>col_select = <span class="number">0</span>;
+
+    <span class="kw">let </span>act_vec = actual.split(<span class="string">","</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+    <span class="kw">for </span>(i, col) <span class="kw">in </span>index.replace(<span class="string">"\n"</span>, <span class="string">""</span>).split(<span class="string">","</span>).enumerate(){
+        <span class="kw">if </span>columns.contains(<span class="kw-2">&amp;</span>col.to_string()){
+            new_string.push_str(act_vec[i]);
+            new_string.push(<span class="string">','</span>);
+            col_select += <span class="number">1</span>;
+        }
+    }
+
+    <span class="kw">if </span>col_select != columns.len(){
+        <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidColumn)
+    }
+
+    new_string.pop();
+    <span class="prelude-val">Ok</span>(new_string)
+}
+
+<span class="doccomment">///
+/// La implementación de operate para Select
+/// 
+/// Si se cumple la condición selecciona la fila y si se quiere ordenar usa select_columns y agrega ese valor al vector de Select.
+/// Si no se printea directamente.
+/// 
+</span><span class="kw">impl </span>Query <span class="kw">for </span>Select{
+    <span class="kw">fn </span>operate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index:<span class="kw-2">&amp;</span>String, actual:String) -&gt; <span class="prelude-ty">Result</span>&lt;String, TypeError&gt;{
 
         <span class="kw">let </span>condition: bool = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.conditions{
-            Expresion::Condicion(c) =&gt; evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::And((c_izq, c_der)) =&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)) &amp;&amp; evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::Not(c) =&gt; !evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::Or((c_izq, c_der))=&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)) || evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
+            Expresion::Condicion(c) =&gt; evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::And((c_izq, c_der)) =&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">? </span>&amp;&amp; evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::Not(c) =&gt; !evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::Or((c_izq, c_der))=&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">? </span>|| evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::All =&gt; <span class="bool-val">true</span>,
         };
 
         <span class="kw">match </span>condition{
             <span class="bool-val">true </span>=&gt; {
                 <span class="kw">if </span><span class="self">self</span>.sort{
                     <span class="kw">if </span><span class="self">self</span>.lines.len() == <span class="number">0</span>{
-                        <span class="self">self</span>.lines.push(index.to_owned());
+                        <span class="self">self</span>.lines.push(select_columns(index.clone(), <span class="kw-2">&amp;</span><span class="self">self</span>.columns, index)<span class="question-mark">?</span>);
                     }
-                    <span class="self">self</span>.lines.push(actual);
+                    <span class="self">self</span>.lines.push(select_columns(actual, <span class="kw-2">&amp;</span><span class="self">self</span>.columns, index)<span class="question-mark">?</span>);
                 }<span class="kw">else</span>{
                     <span class="macro">println!</span>(<span class="string">"{}"</span>, actual);
                 }
             },
             <span class="bool-val">false </span>=&gt; (),
         }
-        <span class="string">""</span>.to_string()
+        <span class="prelude-val">Ok</span>(<span class="string">""</span>.to_string())
+    }
+}
+
+<span class="attr">#[test]
+</span><span class="kw">fn </span>sintax_error_test1() {
+    <span class="kw">let </span>str1 = String::from(<span class="string">"SELECT id, id_cliente tabla1 WHERE id_cliente &gt; 1 ORDER BY id ASC"</span>);
+    <span class="kw">let </span>try1: <span class="prelude-ty">Result</span>&lt;Select, TypeError&gt;  = Select::new(<span class="string">"tabla1"</span>.to_string(), <span class="kw-2">&amp;</span>str1);
+    
+    <span class="kw">match </span>try1{ 
+        <span class="prelude-val">Err</span>(TypeError::InvalidSintax) =&gt; <span class="macro">assert!</span>(<span class="bool-val">true</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">assert!</span>(<span class="bool-val">false</span>)
+    }
+}
+
+<span class="attr">#[test]
+</span><span class="kw">fn </span>sintax_error_test2(){
+    <span class="kw">let </span>str2 = String::from(<span class="string">"SELECT FROM tabla1 WHERE id_cliente &gt; 1 ORDER BY id ASC"</span>);
+    <span class="kw">let </span>try2: <span class="prelude-ty">Result</span>&lt;Select, TypeError&gt;  = Select::new(<span class="string">"tabla1"</span>.to_string(), <span class="kw-2">&amp;</span>str2);
+    
+    <span class="kw">match </span>try2{ 
+        <span class="prelude-val">Err</span>(TypeError::InvalidSintax) =&gt; <span class="macro">assert!</span>(<span class="bool-val">true</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">assert!</span>(<span class="bool-val">false</span>)
+    }
+}
+
+<span class="attr">#[test]
+</span><span class="kw">fn </span>sintax_error_test3(){
+    <span class="kw">let </span>str3 = String::from(<span class="string">"SELECT id FROM"</span>);
+    <span class="kw">let </span>try3: <span class="prelude-ty">Result</span>&lt;Select, TypeError&gt;  = Select::new(<span class="string">""</span>.to_string(), <span class="kw-2">&amp;</span>str3);
+    
+    <span class="kw">match </span>try3{ 
+        <span class="prelude-val">Err</span>(TypeError::InvalidSintax) =&gt; <span class="macro">assert!</span>(<span class="bool-val">true</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">assert!</span>(<span class="bool-val">false</span>)
+    }
+}
+
+<span class="attr">#[test]
+</span><span class="kw">fn </span>sintax_error_test4(){
+    <span class="kw">let </span>str4 = String::from(<span class="string">"SELECT id FROM tabla1"</span>);
+    <span class="kw">let </span>try4: <span class="prelude-ty">Result</span>&lt;Select, TypeError&gt;  = Select::new(<span class="string">"tabla1"</span>.to_string(), <span class="kw-2">&amp;</span>str4);
+    
+    <span class="kw">match </span>try4{ 
+        <span class="prelude-val">Err</span>(TypeError::InvalidSintax) =&gt; <span class="macro">assert!</span>(<span class="bool-val">false</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">assert!</span>(<span class="bool-val">true</span>)
     }
 }
 </code></pre></div></section></main></body></html>

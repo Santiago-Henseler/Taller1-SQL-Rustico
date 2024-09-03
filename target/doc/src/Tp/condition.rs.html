@@ -111,10 +111,33 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::query::TypeError;
 
-
-<span class="attr">#[derive(Debug)]
+<span class="doccomment">/// La representación e implementación de las expresiones de busqueda
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>Operador {
     Mayor,
     MayorOIgual,
@@ -136,10 +159,15 @@
     Condicion(Condicion),
     And((Condicion, Condicion)),
     Or((Condicion, Condicion)),
-    Not(Condicion)
+    Not(Condicion),
+    All,
 }
 
-<span class="kw">fn </span>make_condition(str: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;Condicion, TypeError&gt;{
+<span class="doccomment">/// 
+/// Crea la Condicion de busqueda
+/// Si no se puede crear devuelve InvalidSintax.
+/// 
+</span><span class="kw">fn </span>make_condition(str: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;Condicion, TypeError&gt;{
 
     <span class="kw">let </span>strvec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = str.trim().split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
 
@@ -166,7 +194,11 @@
     }
 }
 
-<span class="kw">pub fn </span>get_conditions(condition: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Expresion, TypeError&gt;{
+<span class="doccomment">/// 
+/// Crea la Expresion de busqueda
+/// Si no se puede crear devuelve InvalidSintax.
+/// 
+</span><span class="kw">pub fn </span>get_conditions(condition: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Expresion, TypeError&gt;{
 
     <span class="kw">if </span>condition.contains(<span class="string">"AND"</span>){
         <span class="kw">let </span>str: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = condition.split(<span class="string">"AND"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
@@ -182,7 +214,10 @@
     }
 }
 
-<span class="kw">fn </span>cmp_str(compare:<span class="kw-2">&amp;</span>String, actual: <span class="kw-2">&amp;</span>String, operador:<span class="kw-2">&amp;</span>Operador) -&gt; bool{
+<span class="doccomment">/// 
+/// Compara los Stings recibidos
+/// 
+</span><span class="kw">fn </span>cmp_str(compare:<span class="kw-2">&amp;</span>String, actual: <span class="kw-2">&amp;</span>String, operador:<span class="kw-2">&amp;</span>Operador) -&gt; bool{
     <span class="kw">let </span>eval = <span class="kw">match </span>operador {
         Operador::Igual =&gt; compare == actual,
         Operador::Mayor =&gt; compare &lt; actual,
@@ -194,7 +229,10 @@
     eval
 }
 
-<span class="kw">fn </span>cmp_int(compare:<span class="kw-2">&amp;</span>isize, actual: <span class="kw-2">&amp;</span>isize, operador:<span class="kw-2">&amp;</span>Operador) -&gt; bool{
+<span class="doccomment">/// 
+/// Compara los enteros recibidos
+/// 
+</span><span class="kw">fn </span>cmp_int(compare:<span class="kw-2">&amp;</span>isize, actual: <span class="kw-2">&amp;</span>isize, operador:<span class="kw-2">&amp;</span>Operador) -&gt; bool{
     <span class="kw">let </span>eval = <span class="kw">match </span>operador {
         Operador::Igual =&gt; compare == actual,
         Operador::Mayor =&gt; compare &lt; actual,
@@ -206,21 +244,29 @@
     eval
 }
 
-<span class="kw">pub fn </span>evaluar(c: <span class="kw-2">&amp;</span>Condicion, index:<span class="kw-2">&amp;</span>String, actual: <span class="kw-2">&amp;</span>String) -&gt; bool{
+<span class="doccomment">/// 
+/// Evalua la Condicion de busqueda
+/// Si no se encuentra la columna a comparar devuelve InvalidColumn
+/// 
+</span><span class="kw">pub fn </span>evaluar(c: <span class="kw-2">&amp;</span>Condicion, index:<span class="kw-2">&amp;</span>String, actual: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;bool, TypeError&gt;{
 
     <span class="kw">let </span><span class="kw-2">mut </span>eval = <span class="bool-val">false</span>;
     <span class="kw">let </span>act_vec = actual.split(<span class="string">","</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
 
+    <span class="kw">let </span><span class="kw-2">mut </span>column_exist = <span class="bool-val">false</span>;
     <span class="kw">for </span>(i, s) <span class="kw">in </span>index.replace(<span class="string">"\n"</span>, <span class="string">""</span>).split(<span class="string">","</span>).enumerate(){
         <span class="kw">if </span>s.to_string() == c.column_index{
-            
+            column_exist = <span class="bool-val">true</span>;
             <span class="kw">if </span>c.value.chars().all(|ch: char| ch.is_numeric()) &amp;&amp; act_vec[i].chars().all(|c| c.is_numeric()){
                 eval = cmp_int(<span class="kw-2">&amp;</span>c.value.parse::&lt;isize&gt;().unwrap_or(<span class="number">0</span>), <span class="kw-2">&amp;</span>act_vec[i].parse::&lt;isize&gt;().unwrap_or(<span class="number">0</span>), <span class="kw-2">&amp;</span>c.operador);
-
             }<span class="kw">else</span>{
                 eval = cmp_str(<span class="kw-2">&amp;</span>c.value, <span class="kw-2">&amp;</span>act_vec[i].to_string(), <span class="kw-2">&amp;</span>c.operador);
             }
         }
     }
-    eval
+    <span class="kw">if </span>!column_exist{
+        <span class="kw">return  </span><span class="prelude-val">Err</span>(TypeError::InvalidColumn)
+    }
+
+    <span class="prelude-val">Ok</span>(eval)
 }</code></pre></div></section></main></body></html>

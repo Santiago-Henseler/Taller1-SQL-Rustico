@@ -96,6 +96,20 @@
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::query;
 <span class="kw">use </span>query::Query;
 <span class="kw">use </span>query::TypeError;
@@ -104,13 +118,20 @@
 <span class="kw">use </span>condition::Expresion;
 <span class="kw">use </span>condition::evaluar;
 
-<span class="attr">#[derive(Debug)]
+<span class="doccomment">/// La representación e implementación del comando Delet de SQL
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>Delet{
     conditions: Expresion,
 }
 
 <span class="kw">impl </span>Delet{
-    <span class="kw">pub fn </span>new(table:String, query: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, TypeError&gt;{
+    <span class="doccomment">/// Crea la representación de Delet 
+    ///
+    /// Necesita recibir la tabla con la que va a operar y la query pedida
+    ///  
+    /// Devuelve Delet o InvalidSintax si la query no es valida
+    /// 
+    </span><span class="kw">pub fn </span>new(table:String, query: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, TypeError&gt;{
         
         <span class="kw">let </span>str: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.split(<span class="kw-2">&amp;</span>table).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
 
@@ -125,19 +146,26 @@
     }
 }
 
-<span class="kw">impl </span>Query <span class="kw">for </span>Delet{
-    <span class="kw">fn </span>operate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index:<span class="kw-2">&amp;</span>String, actual:String) -&gt; String{
+<span class="doccomment">///
+/// La implementación de operate para Delet
+/// 
+/// Si se cumple la condición para borrar la fila devuelve un string vacio.
+/// Si no devuelve la fila sin modificarla
+/// 
+</span><span class="kw">impl </span>Query <span class="kw">for </span>Delet{
+    <span class="kw">fn </span>operate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index:<span class="kw-2">&amp;</span>String, actual:String) -&gt; <span class="prelude-ty">Result</span>&lt;String, TypeError&gt;{
 
         <span class="kw">let </span>condition: bool = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.conditions{
-            Expresion::Condicion(c) =&gt; evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::And((c_izq, c_der)) =&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)) &amp;&amp; evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::Not(c) =&gt; !evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
-            Expresion::Or((c_izq, c_der))=&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)) || evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>)),
+            Expresion::Condicion(c) =&gt; evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::And((c_izq, c_der)) =&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">? </span>&amp;&amp; evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::Not(c) =&gt; !evaluar(c, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::Or((c_izq, c_der))=&gt; evaluar(c_izq, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">? </span>|| evaluar(c_der, index, <span class="kw-2">&amp;</span>actual.replace(<span class="string">"\n"</span>, <span class="string">""</span>))<span class="question-mark">?</span>,
+            Expresion::All =&gt; <span class="bool-val">true</span>,
         };
 
         <span class="kw">match </span>condition{
-            <span class="bool-val">true </span>=&gt; <span class="string">""</span>.to_string(),
-            <span class="bool-val">false </span>=&gt; actual,
+            <span class="bool-val">true </span>=&gt; <span class="prelude-val">Ok</span>(<span class="string">""</span>.to_string()),
+            <span class="bool-val">false </span>=&gt; <span class="prelude-val">Ok</span>(actual),
         }
     }
 }
@@ -180,7 +208,7 @@
     <span class="kw">let </span>str = String::from(<span class="string">"DELET FROM tabla1 WHERE id_cliente = 1"</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>instance:Delet  = Delet::new(<span class="string">"tabla1"</span>.to_string(), <span class="kw-2">&amp;</span>str).unwrap();
 
-    <span class="kw">let </span>word = instance.operate(<span class="kw-2">&amp;</span><span class="string">"id,id_cliente,producto,cantidad"</span>.to_string(), <span class="string">"101,1,Laptop,1"</span>.to_string());
+    <span class="kw">let </span>word = instance.operate(<span class="kw-2">&amp;</span><span class="string">"id,id_cliente,producto,cantidad"</span>.to_string(), <span class="string">"101,1,Laptop,1"</span>.to_string()).unwrap();
 
     <span class="macro">assert_eq!</span>(word, <span class="string">""</span>.to_string());
 }
@@ -190,7 +218,7 @@
     <span class="kw">let </span>str = String::from(<span class="string">"Delet tabla1 SET id = 99 WHERE id_cliente = 3"</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>instance:Delet  = Delet::new(<span class="string">"tabla1"</span>.to_string(), <span class="kw-2">&amp;</span>str).unwrap();
     
-    <span class="kw">let </span>word = instance.operate(<span class="kw-2">&amp;</span><span class="string">"id, id_cliente, producto, cantidad"</span>.to_string(), <span class="string">"101,1,Laptop,1"</span>.to_string());
+    <span class="kw">let </span>word = instance.operate(<span class="kw-2">&amp;</span><span class="string">"id,id_cliente,producto,cantidad"</span>.to_string(), <span class="string">"101,1,Laptop,1"</span>.to_string()).unwrap();
 
     <span class="macro">assert_eq!</span>(word, <span class="string">"101,1,Laptop,1"</span>.to_string());
 }</code></pre></div></section></main></body></html>

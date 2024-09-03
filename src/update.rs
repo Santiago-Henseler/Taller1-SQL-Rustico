@@ -166,7 +166,7 @@ fn operate_test2(){
     let str = String::from("UPDATE tabla1 SET id = 99 WHERE id_cliente = 3");
     let mut instance:Update  = Update::new("tabla1".to_string(), &str).unwrap();
     
-    let word = instance.operate(&"id, id_cliente, producto, cantidad".to_string(), "101,1,Laptop,1".to_string()).unwrap();
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1".to_string()).unwrap();
 
     assert_eq!(word, "101,1,Laptop,1".to_string());
 }
