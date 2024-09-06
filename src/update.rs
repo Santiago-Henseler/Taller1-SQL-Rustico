@@ -41,7 +41,7 @@ impl Update{
     ///  
     /// Devuelve Update o InvalidSintax si la query no es valida
     /// 
-    pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
+    pub fn new(table:String, query: &str) -> Result<Self, TypeError>{
 
         if !query.contains("WHERE") || !query.contains("SET"){
             return Err(TypeError::InvalidSintax)
@@ -49,12 +49,12 @@ impl Update{
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>();
 
         let mut hash: HashMap<String, String> = HashMap::new();
-        make_kv(&mut hash, &str[0].split("SET").collect::<Vec<&str>>()[1])?;
+        make_kv(&mut hash, str[0].split("SET").collect::<Vec<&str>>()[1])?;
 
         let conditions = get_conditions(str[1].replace(',', " AND ").as_str())?;
  
         Ok(Self {
-            conditions: conditions,
+            conditions,
             set: hash
         })
     }
@@ -65,7 +65,7 @@ impl Update{
 /// 
 /// Devuelve la fila modificada 
 /// 
-fn update_str(hash: &HashMap<String,String>, index: &String, actual: String) -> Result<String, TypeError>{
+fn update_str(hash: &HashMap<String,String>, index: &str, actual: String) -> Result<String, TypeError>{
 
     let mut new_string: String = String::from("");
 
@@ -90,7 +90,7 @@ fn update_str(hash: &HashMap<String,String>, index: &String, actual: String) -> 
 /// Si no devuelve la fila sin modificarla
 /// 
 impl Query for Update{
-    fn operate(&mut self, index:&String, actual:String) -> Result<String, TypeError>{
+    fn operate(&mut self, index:&str, actual:String) -> Result<String, TypeError>{
 
         let condition: bool = match &self.conditions{
             Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", ""))?,

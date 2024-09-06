@@ -31,9 +31,9 @@ pub enum Expresion{
 /// Crea la Condicion de busqueda
 /// Si no se puede crear devuelve InvalidSintax.
 /// 
-fn make_condition(str: &String) -> Result<Condicion, TypeError>{
+fn make_condition(str: &str) -> Result<Condicion, TypeError>{
 
-    let strvec: Vec<&str> = str.trim().split_whitespace().collect::<Vec<&str>>();
+    let strvec: Vec<&str> = str.split_whitespace().collect::<Vec<&str>>();
 
     if strvec.len() != 3{
         return Err(TypeError::InvalidSintax)
@@ -66,15 +66,15 @@ pub fn get_conditions(condition: &str) -> Result<Expresion, TypeError>{
 
     if condition.contains("AND"){
         let str: Vec<&str> = condition.split("AND").collect::<Vec<&str>>();
-        Ok(Expresion::And((make_condition(&str[0].to_string())?, make_condition(&str[1].to_string())?)))
+        Ok(Expresion::And((make_condition(str[0])?, make_condition(str[1])?)))
     }else if condition.contains("NOT"){
         let str: Vec<&str> = condition.split("NOT").collect::<Vec<&str>>();
-        Ok(Expresion::Not(make_condition(&str[1].to_string())?))
+        Ok(Expresion::Not(make_condition(str[1])?))
     }else if condition.contains("OR"){
         let str: Vec<&str> = condition.split("OR").collect::<Vec<&str>>();
-        Ok(Expresion::Or((make_condition(&str[0].to_string())?, make_condition(&str[1].to_string())?)))
+        Ok(Expresion::Or((make_condition(str[0])?, make_condition(str[1])?)))
     }else{
-       Ok(Expresion::Condicion(make_condition(&condition.to_string())?))
+       Ok(Expresion::Condicion(make_condition(condition)?))
     }
 }
 
@@ -82,44 +82,42 @@ pub fn get_conditions(condition: &str) -> Result<Expresion, TypeError>{
 /// Compara los Stings recibidos
 /// 
 fn cmp_str(compare:&String, actual: &String, operador:&Operador) -> bool{
-    let eval = match operador {
+    match operador {
         Operador::Igual => compare == actual,
         Operador::Mayor => compare < actual,
         Operador::MayorOIgual => compare <= actual,
         Operador::Menor => compare > actual,
         Operador::MenorOIgual => compare >= actual,
         Operador::Error => false,
-    };
-    eval
+    }
 }
 
 /// 
 /// Compara los enteros recibidos
 /// 
 fn cmp_int(compare:&isize, actual: &isize, operador:&Operador) -> bool{
-    let eval = match operador {
+    match operador {
         Operador::Igual => compare == actual,
         Operador::Mayor => compare < actual,
         Operador::MayorOIgual => compare <= actual,
         Operador::Menor => compare > actual,
         Operador::MenorOIgual => compare >= actual,
         Operador::Error => false,
-    };
-    eval
+    }
 }
 
 /// 
 /// Evalua la Condicion de busqueda
 /// Si no se encuentra la columna a comparar devuelve InvalidColumn
 /// 
-pub fn evaluar(c: &Condicion, index:&String, actual: &String) -> Result<bool, TypeError>{
+pub fn evaluar(c: &Condicion, index:&str, actual: &str) -> Result<bool, TypeError>{
 
     let mut eval = false;
     let act_vec = actual.split(",").collect::<Vec<&str>>();
 
     let mut column_exist = false;
     for (i, s) in index.replace("\n", "").split(",").enumerate(){
-        if s.to_string() == c.column_index{
+        if *s == c.column_index{
             column_exist = true;
             if c.value.chars().all(|ch: char| ch.is_numeric()) && act_vec[i].chars().all(|c| c.is_numeric()){
                 eval = cmp_int(&c.value.parse::<isize>().unwrap_or(0), &act_vec[i].parse::<isize>().unwrap_or(0), &c.operador);

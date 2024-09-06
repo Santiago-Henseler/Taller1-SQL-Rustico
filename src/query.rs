@@ -12,7 +12,7 @@ pub enum TypeError{
 }
 
 pub trait Query{
-    fn operate(&mut self, column_index: &String, line: String)-> Result<String, TypeError>;
+    fn operate(&mut self, column_index: &str, line: String)-> Result<String, TypeError>;
 }
 
 pub fn mod_file(path:String, instance: &mut dyn Query)-> Result<(), TypeError>{
@@ -24,7 +24,7 @@ pub fn mod_file(path:String, instance: &mut dyn Query)-> Result<(), TypeError>{
 
     column_index = column_index.replace("\n", "");
 
-    let mut temp_file = OpenOptions::new().write(true).create(true).open("tmp.csv").map_err(|_|  TypeError::Error)?;
+    let mut temp_file = OpenOptions::new().write(true).create(true).truncate(true).open("tmp.csv").map_err(|_|  TypeError::Error)?;
     let mut cambio = false;
 
     writeln!(temp_file, "{}", column_index).map_err(|_|  TypeError::Error)?;
@@ -32,7 +32,7 @@ pub fn mod_file(path:String, instance: &mut dyn Query)-> Result<(), TypeError>{
         let line = line.map_err(|_| TypeError::Error)?;
         let new_line: String = instance.operate(&column_index, line)?;
         
-        if new_line != ""{
+        if !new_line.is_empty(){
             writeln!(temp_file, "{}", new_line).map_err(|_|  TypeError::Error)?;
             cambio = true;
         }

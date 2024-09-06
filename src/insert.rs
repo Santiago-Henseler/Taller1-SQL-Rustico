@@ -20,7 +20,7 @@ impl Insert{
     ///  
     /// Devuelve Insert o InvalidSintax si la query no es valida
     /// 
-    pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
+    pub fn new(table:String, query: &str) -> Result<Self, TypeError>{
        
         if !query.contains("VALUES"){
             return Err(TypeError::InvalidSintax)
@@ -48,12 +48,12 @@ impl Insert{
 /// 
 /// Si no puede crear el par columna-valor devuelve un error de InvalidSintax
 /// 
-pub fn make_kv(hash: &mut HashMap<String,String>, str: &Vec<&str>) -> Result<(), TypeError>{
+pub fn make_kv(hash: &mut HashMap<String,String>, str: &[&str]) -> Result<(), TypeError>{
     
-    let keys = str[0].replace('(', "").replace(')', "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>();
-    let values = str[1].replace('(', "").replace(')', "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>();
+    let keys = str[0].replace(['(', ')'], "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>();
+    let values = str[1].replace(['(', ')'], "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>();
   
-    if values[0] == "" || keys.len() < 2{
+    if values[0].is_empty() || keys.len() < 2{
         return Err(TypeError::InvalidSintax)
     }
 
@@ -71,7 +71,7 @@ pub fn make_kv(hash: &mut HashMap<String,String>, str: &Vec<&str>) -> Result<(),
 /// Y si alguna columna no existe devuelve InvalidColumn
 /// 
 impl Query for Insert{
-    fn operate(&mut self, index:&String, _actual:String) -> Result<String, TypeError>{
+    fn operate(&mut self, index:&str, _actual:String) -> Result<String, TypeError>{
         let mut word: String = String::new();
         let mut i = 0;
 
@@ -80,7 +80,7 @@ impl Query for Insert{
                 word.push_str(self.values.get(s).unwrap_or(&"".to_string()));
                 i += 1;
             }else{
-                word.push_str(&"NONE".to_string());
+                word.push_str("NONE");
             }
             word.push(',');
         }

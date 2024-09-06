@@ -132,8 +132,6 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
-<a href="#135" id="135">135</a>
-<a href="#136" id="136">136</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::query::TypeError;
 
 <span class="doccomment">/// La representación e implementación de las expresiones de busqueda
@@ -167,9 +165,9 @@
 /// Crea la Condicion de busqueda
 /// Si no se puede crear devuelve InvalidSintax.
 /// 
-</span><span class="kw">fn </span>make_condition(str: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;Condicion, TypeError&gt;{
+</span><span class="kw">fn </span>make_condition(str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Condicion, TypeError&gt;{
 
-    <span class="kw">let </span>strvec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = str.trim().split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+    <span class="kw">let </span>strvec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = str.split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
 
     <span class="kw">if </span>strvec.len() != <span class="number">3</span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax)
@@ -202,15 +200,15 @@
 
     <span class="kw">if </span>condition.contains(<span class="string">"AND"</span>){
         <span class="kw">let </span>str: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = condition.split(<span class="string">"AND"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
-        <span class="prelude-val">Ok</span>(Expresion::And((make_condition(<span class="kw-2">&amp;</span>str[<span class="number">0</span>].to_string())<span class="question-mark">?</span>, make_condition(<span class="kw-2">&amp;</span>str[<span class="number">1</span>].to_string())<span class="question-mark">?</span>)))
+        <span class="prelude-val">Ok</span>(Expresion::And((make_condition(str[<span class="number">0</span>])<span class="question-mark">?</span>, make_condition(str[<span class="number">1</span>])<span class="question-mark">?</span>)))
     }<span class="kw">else if </span>condition.contains(<span class="string">"NOT"</span>){
         <span class="kw">let </span>str: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = condition.split(<span class="string">"NOT"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
-        <span class="prelude-val">Ok</span>(Expresion::Not(make_condition(<span class="kw-2">&amp;</span>str[<span class="number">1</span>].to_string())<span class="question-mark">?</span>))
+        <span class="prelude-val">Ok</span>(Expresion::Not(make_condition(str[<span class="number">1</span>])<span class="question-mark">?</span>))
     }<span class="kw">else if </span>condition.contains(<span class="string">"OR"</span>){
         <span class="kw">let </span>str: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = condition.split(<span class="string">"OR"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
-        <span class="prelude-val">Ok</span>(Expresion::Or((make_condition(<span class="kw-2">&amp;</span>str[<span class="number">0</span>].to_string())<span class="question-mark">?</span>, make_condition(<span class="kw-2">&amp;</span>str[<span class="number">1</span>].to_string())<span class="question-mark">?</span>)))
+        <span class="prelude-val">Ok</span>(Expresion::Or((make_condition(str[<span class="number">0</span>])<span class="question-mark">?</span>, make_condition(str[<span class="number">1</span>])<span class="question-mark">?</span>)))
     }<span class="kw">else</span>{
-       <span class="prelude-val">Ok</span>(Expresion::Condicion(make_condition(<span class="kw-2">&amp;</span>condition.to_string())<span class="question-mark">?</span>))
+       <span class="prelude-val">Ok</span>(Expresion::Condicion(make_condition(condition)<span class="question-mark">?</span>))
     }
 }
 
@@ -218,44 +216,42 @@
 /// Compara los Stings recibidos
 /// 
 </span><span class="kw">fn </span>cmp_str(compare:<span class="kw-2">&amp;</span>String, actual: <span class="kw-2">&amp;</span>String, operador:<span class="kw-2">&amp;</span>Operador) -&gt; bool{
-    <span class="kw">let </span>eval = <span class="kw">match </span>operador {
+    <span class="kw">match </span>operador {
         Operador::Igual =&gt; compare == actual,
         Operador::Mayor =&gt; compare &lt; actual,
         Operador::MayorOIgual =&gt; compare &lt;= actual,
         Operador::Menor =&gt; compare &gt; actual,
         Operador::MenorOIgual =&gt; compare &gt;= actual,
         Operador::Error =&gt; <span class="bool-val">false</span>,
-    };
-    eval
+    }
 }
 
 <span class="doccomment">/// 
 /// Compara los enteros recibidos
 /// 
 </span><span class="kw">fn </span>cmp_int(compare:<span class="kw-2">&amp;</span>isize, actual: <span class="kw-2">&amp;</span>isize, operador:<span class="kw-2">&amp;</span>Operador) -&gt; bool{
-    <span class="kw">let </span>eval = <span class="kw">match </span>operador {
+    <span class="kw">match </span>operador {
         Operador::Igual =&gt; compare == actual,
         Operador::Mayor =&gt; compare &lt; actual,
         Operador::MayorOIgual =&gt; compare &lt;= actual,
         Operador::Menor =&gt; compare &gt; actual,
         Operador::MenorOIgual =&gt; compare &gt;= actual,
         Operador::Error =&gt; <span class="bool-val">false</span>,
-    };
-    eval
+    }
 }
 
 <span class="doccomment">/// 
 /// Evalua la Condicion de busqueda
 /// Si no se encuentra la columna a comparar devuelve InvalidColumn
 /// 
-</span><span class="kw">pub fn </span>evaluar(c: <span class="kw-2">&amp;</span>Condicion, index:<span class="kw-2">&amp;</span>String, actual: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;bool, TypeError&gt;{
+</span><span class="kw">pub fn </span>evaluar(c: <span class="kw-2">&amp;</span>Condicion, index:<span class="kw-2">&amp;</span>str, actual: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;bool, TypeError&gt;{
 
     <span class="kw">let </span><span class="kw-2">mut </span>eval = <span class="bool-val">false</span>;
     <span class="kw">let </span>act_vec = actual.split(<span class="string">","</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
 
     <span class="kw">let </span><span class="kw-2">mut </span>column_exist = <span class="bool-val">false</span>;
     <span class="kw">for </span>(i, s) <span class="kw">in </span>index.replace(<span class="string">"\n"</span>, <span class="string">""</span>).split(<span class="string">","</span>).enumerate(){
-        <span class="kw">if </span>s.to_string() == c.column_index{
+        <span class="kw">if </span><span class="kw-2">*</span>s == c.column_index{
             column_exist = <span class="bool-val">true</span>;
             <span class="kw">if </span>c.value.chars().all(|ch: char| ch.is_numeric()) &amp;&amp; act_vec[i].chars().all(|c| c.is_numeric()){
                 eval = cmp_int(<span class="kw-2">&amp;</span>c.value.parse::&lt;isize&gt;().unwrap_or(<span class="number">0</span>), <span class="kw-2">&amp;</span>act_vec[i].parse::&lt;isize&gt;().unwrap_or(<span class="number">0</span>), <span class="kw-2">&amp;</span>c.operador);

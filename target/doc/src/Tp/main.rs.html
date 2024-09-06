@@ -103,7 +103,6 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
-<a href="#106" id="106">106</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::env;
 
 <span class="kw">mod </span>insert;
@@ -123,11 +122,10 @@
 <span class="kw">use </span>query::TypeError;
 
 <span class="comment">// TODO:
-// Agregar mejores prints de error
-// Agregar segunda condicion de sort 
-// hacer test
+// Poder tener varias condiciones dentro de condition
+// hacer test y documentar 
 
-</span><span class="kw">fn </span>get_path(archivo: <span class="kw-2">&amp;</span>str, dir:<span class="kw-2">&amp;</span>String) -&gt; String{
+</span><span class="kw">fn </span>get_path(archivo: <span class="kw-2">&amp;</span>str, dir:<span class="kw-2">&amp;</span>str) -&gt; String{
 
     <span class="kw">let </span><span class="kw-2">mut </span>path: String = String::from(<span class="string">""</span>);
     path.push_str(dir);
@@ -138,9 +136,9 @@
     path
 }
 
-<span class="kw">fn </span>run(query: <span class="kw-2">&amp;</span>String, dir:String) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeError&gt;{
+<span class="kw">fn </span>run(query: <span class="kw-2">&amp;</span>str, dir:String) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeError&gt;{
 
-    <span class="kw">let </span>vec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.trim().split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+    <span class="kw">let </span>vec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
 
     <span class="kw">match </span>vec[<span class="number">0</span>] {
         <span class="string">"INSERT" </span>=&gt; {
@@ -162,8 +160,8 @@
             <span class="prelude-val">Ok</span>(())
         },
         <span class="string">"SELECT" </span>=&gt; {
-            <span class="kw">let </span>tabla = query.split(<span class="string">"FROM"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>].split(<span class="string">"WHERE"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">0</span>].replace(<span class="string">" "</span>, <span class="string">""</span>);
-            <span class="kw">let </span>path = get_path(<span class="kw-2">&amp;</span>tabla, <span class="kw-2">&amp;</span>dir);
+            <span class="kw">let </span>tabla = query.split(<span class="string">"FROM"</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">1</span>].split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[<span class="number">0</span>];
+            <span class="kw">let </span>path = get_path(tabla, <span class="kw-2">&amp;</span>dir);
             <span class="kw">let </span><span class="kw-2">mut </span>instance: Select = Select::new(tabla.to_string(), query)<span class="question-mark">?</span>;
             mod_file(path, <span class="kw-2">&amp;mut </span>instance)<span class="question-mark">?</span>;
             instance.print()<span class="question-mark">?</span>;
@@ -173,8 +171,8 @@
     }
 }
 
-<span class="kw">fn </span>show_error(query: <span class="kw-2">&amp;</span>String){
-    <span class="kw">let </span>vec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.trim().split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+<span class="kw">fn </span>show_error(query: <span class="kw-2">&amp;</span>str){
+    <span class="kw">let </span>vec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = query.split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
 
     <span class="kw">match </span>vec[<span class="number">0</span>] {
         <span class="string">"INSERT" </span>=&gt; {

@@ -85,6 +85,37 @@
 <a href="#85" id="85">85</a>
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::query;
 <span class="kw">use </span>query::TypeError;
 
@@ -93,7 +124,7 @@
 </span><span class="kw">pub struct </span>SortCondition {
     <span class="kw">pub </span>column_index: String,
     <span class="kw">pub </span>ascendiente: bool,
-    <span class="kw">pub </span>seg_condition: String,
+    <span class="kw">pub </span>second_condition: String,
 }
 
 <span class="attr">#[derive(Debug)]
@@ -106,26 +137,42 @@
 /// Crea la SortCondition
 /// Si no se puede crear devuelve InvalidSintax.
 /// 
-</span><span class="kw">pub fn </span>make_sort_condition(str:<span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;SortExpresion, TypeError&gt;{
+</span><span class="kw">fn </span>make_sort_condition(first_cond:<span class="kw-2">&amp;</span>str, second_cond: String) -&gt; <span class="prelude-ty">Result</span>&lt;SortCondition, TypeError&gt;{
 
-    <span class="kw">let </span>vstr = str.split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+    <span class="kw">let </span>first_cond_vec = first_cond.split_whitespace().collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
     <span class="kw">let </span><span class="kw-2">mut </span>ascendente = <span class="bool-val">true</span>;
 
-    <span class="kw">if </span>vstr.len() == <span class="number">2 </span>{
-        ascendente = <span class="kw">match </span>vstr[<span class="number">1</span>] {
+    <span class="kw">if </span>first_cond_vec.len() == <span class="number">2 </span>{
+        ascendente = <span class="kw">match </span>first_cond_vec[<span class="number">1</span>] {
                 <span class="string">"ASC" </span>=&gt; <span class="bool-val">true</span>,
                 <span class="string">"DESC"</span>=&gt; <span class="bool-val">false</span>,
                 <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax),
             };
-    }<span class="kw">else if </span>vstr.len() != <span class="number">1 </span>{
+    }<span class="kw">else if </span>first_cond_vec.len() != <span class="number">1 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax)
     }
 
-    <span class="prelude-val">Ok</span>(SortExpresion::SortCondition(SortCondition {
-        column_index: vstr[<span class="number">0</span>].to_string(),
+    <span class="prelude-val">Ok</span>(SortCondition {
+        column_index: first_cond_vec[<span class="number">0</span>].to_string(),
         ascendiente: ascendente,
-        seg_condition: <span class="string">""</span>.to_string(),
-    }))
+        second_condition: second_cond,
+    })
+}
+
+<span class="doccomment">/// 
+/// Crea la SortExpresion
+/// Si no se puede crear devuelve InvalidSintax.
+/// 
+</span><span class="kw">pub fn </span>make_sort_expresion(str:<span class="kw-2">&amp;</span>str)-&gt; <span class="prelude-ty">Result</span>&lt;SortExpresion, TypeError&gt;{
+
+    <span class="kw">let </span>cond_vec: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = str.split(<span class="string">','</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;();
+    <span class="kw">let </span><span class="kw-2">mut </span>second_cond = String::from(<span class="string">""</span>);
+
+    <span class="kw">if </span>cond_vec.len() == <span class="number">2</span>{
+        second_cond = cond_vec[<span class="number">1</span>].trim().to_string();
+    }
+
+    <span class="prelude-val">Ok</span>(SortExpresion::SortCondition(make_sort_condition(cond_vec[<span class="number">0</span>], second_cond)<span class="question-mark">?</span>))
 }
 
 <span class="doccomment">/// 
@@ -136,24 +183,38 @@
         <span class="kw">if </span>mayor &gt; actual{
             <span class="kw">return </span><span class="bool-val">true
         </span>}
-    }<span class="kw">else</span>{
-        <span class="kw">if </span>mayor &lt; actual{
+    }<span class="kw">else if </span>mayor &lt; actual{
             <span class="kw">return </span><span class="bool-val">true
         </span>}
-    }
     <span class="bool-val">false
 </span>}
+
+<span class="doccomment">///
+/// Determina si la segunda condicion es mayor
+/// 
+</span><span class="kw">fn </span>es_mayor_segcond(second_cond: <span class="kw-2">&amp;</span>String, lines: <span class="kw-2">&amp;</span>[String], max: usize, j:usize) -&gt; <span class="prelude-ty">Result</span>&lt;bool, TypeError&gt;{
+
+    <span class="kw">let </span>column :isize = <span class="kw">match </span>lines[<span class="number">0</span>].split(<span class="string">','</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;().iter().position(|x| x == second_cond){
+        <span class="prelude-val">Some</span>(n) =&gt; n <span class="kw">as </span>isize,
+        <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax),
+    };
+
+    <span class="kw">let </span>mayor: <span class="kw-2">&amp;</span>str = lines[max].split(<span class="string">','</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[column <span class="kw">as </span>usize];
+    <span class="kw">let </span>actual = lines[j].split(<span class="string">','</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[column <span class="kw">as </span>usize];
+
+    <span class="prelude-val">Ok</span>(es_mayor(<span class="bool-val">false</span>, mayor, actual))
+}
 
 <span class="doccomment">/// 
 /// Apartir de la SortCondition ordena las filas
 /// Si no se puede ordenar devuelve InvalidSintax.
 /// 
-</span><span class="kw">pub fn </span>sort(lines: <span class="kw-2">&amp;mut </span>Vec&lt;String&gt;, conds_exp: <span class="kw-2">&amp;</span>SortExpresion) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeError&gt;{
+</span><span class="kw">pub fn </span>sort(lines: <span class="kw-2">&amp;mut </span>[String], conds_exp: <span class="kw-2">&amp;</span>SortExpresion) -&gt; <span class="prelude-ty">Result</span>&lt;(), TypeError&gt;{
     <span class="kw">let </span>conds: <span class="kw-2">&amp;</span>SortCondition = <span class="kw">match </span>conds_exp{
         SortExpresion::SortCondition(c) =&gt; c,
         SortExpresion::None =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax),
     };
-    <span class="kw">let </span>column :isize = <span class="kw">match </span>lines[<span class="number">0</span>].as_str().split(<span class="string">','</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;().iter().position(|<span class="kw-2">&amp;</span>x| x == conds.column_index){
+    <span class="kw">let </span>column :isize = <span class="kw">match </span>lines[<span class="number">0</span>].split(<span class="string">','</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;().iter().position(|<span class="kw-2">&amp;</span>x| x == conds.column_index){
         <span class="prelude-val">Some</span>(n) =&gt; n <span class="kw">as </span>isize,
         <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(TypeError::InvalidSintax),
     };
@@ -162,9 +223,10 @@
         <span class="kw">for </span>j <span class="kw">in </span>i+<span class="number">1</span>..lines.len(){
             <span class="kw">let </span>mayor: <span class="kw-2">&amp;</span>str = lines[max].split(<span class="string">','</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[column <span class="kw">as </span>usize];
             <span class="kw">let </span>actual = lines[j].split(<span class="string">','</span>).collect::&lt;Vec&lt;<span class="kw-2">&amp;</span>str&gt;&gt;()[column <span class="kw">as </span>usize];
-            <span class="kw">if </span>es_mayor(conds.ascendiente, mayor, actual){
-                max = j;
+            <span class="kw">if </span>mayor == actual{
+                <span class="kw">if </span>es_mayor_segcond(<span class="kw-2">&amp;</span>conds.second_condition, lines, max, j)<span class="question-mark">?</span>{max = j;}
             }
+            <span class="kw">else if </span>es_mayor(conds.ascendiente, mayor, actual){max = j;}
         }
         <span class="kw">let </span>aux = lines[i].clone();
         lines[i] = lines[max].clone();

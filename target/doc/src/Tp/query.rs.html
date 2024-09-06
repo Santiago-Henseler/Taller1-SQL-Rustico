@@ -59,7 +59,7 @@
 }
 
 <span class="kw">pub trait </span>Query{
-    <span class="kw">fn </span>operate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_index: <span class="kw-2">&amp;</span>String, line: String)-&gt; <span class="prelude-ty">Result</span>&lt;String, TypeError&gt;;
+    <span class="kw">fn </span>operate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_index: <span class="kw-2">&amp;</span>str, line: String)-&gt; <span class="prelude-ty">Result</span>&lt;String, TypeError&gt;;
 }
 
 <span class="kw">pub fn </span>mod_file(path:String, instance: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Query)-&gt; <span class="prelude-ty">Result</span>&lt;(), TypeError&gt;{
@@ -71,7 +71,7 @@
 
     column_index = column_index.replace(<span class="string">"\n"</span>, <span class="string">""</span>);
 
-    <span class="kw">let </span><span class="kw-2">mut </span>temp_file = OpenOptions::new().write(<span class="bool-val">true</span>).create(<span class="bool-val">true</span>).open(<span class="string">"tmp.csv"</span>).map_err(|<span class="kw">_</span>|  TypeError::Error)<span class="question-mark">?</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>temp_file = OpenOptions::new().write(<span class="bool-val">true</span>).create(<span class="bool-val">true</span>).truncate(<span class="bool-val">true</span>).open(<span class="string">"tmp.csv"</span>).map_err(|<span class="kw">_</span>|  TypeError::Error)<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>cambio = <span class="bool-val">false</span>;
 
     <span class="macro">writeln!</span>(temp_file, <span class="string">"{}"</span>, column_index).map_err(|<span class="kw">_</span>|  TypeError::Error)<span class="question-mark">?</span>;
@@ -79,7 +79,7 @@
         <span class="kw">let </span>line = line.map_err(|<span class="kw">_</span>| TypeError::Error)<span class="question-mark">?</span>;
         <span class="kw">let </span>new_line: String = instance.operate(<span class="kw-2">&amp;</span>column_index, line)<span class="question-mark">?</span>;
         
-        <span class="kw">if </span>new_line != <span class="string">""</span>{
+        <span class="kw">if </span>!new_line.is_empty(){
             <span class="macro">writeln!</span>(temp_file, <span class="string">"{}"</span>, new_line).map_err(|<span class="kw">_</span>|  TypeError::Error)<span class="question-mark">?</span>;
             cambio = <span class="bool-val">true</span>;
         }

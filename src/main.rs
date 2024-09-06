@@ -16,12 +16,9 @@ use select::Select;
 use query::mod_file;
 use query::TypeError;
 
-// TODO:
-// Agregar segunda condicion de sort 
-// Poder tener varias condiciones dentro de condition
-// hacer test
 
-fn get_path(archivo: &str, dir:&String) -> String{
+
+fn get_path(archivo: &str, dir:&str) -> String{
 
     let mut path: String = String::from("");
     path.push_str(dir);
@@ -32,9 +29,9 @@ fn get_path(archivo: &str, dir:&String) -> String{
     path
 }
 
-fn run(query: &String, dir:String) -> Result<(), TypeError>{
+fn run(query: &str, dir:String) -> Result<(), TypeError>{
 
-    let vec: Vec<&str> = query.trim().split_whitespace().collect::<Vec<&str>>();
+    let vec: Vec<&str> = query.split_whitespace().collect::<Vec<&str>>();
 
     match vec[0] {
         "INSERT" => {
@@ -56,8 +53,8 @@ fn run(query: &String, dir:String) -> Result<(), TypeError>{
             Ok(())
         },
         "SELECT" => {
-            let tabla = query.split("FROM").collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>()[0].replace(" ", "");
-            let path = get_path(&tabla, &dir);
+            let tabla = query.split("FROM").collect::<Vec<&str>>()[1].split_whitespace().collect::<Vec<&str>>()[0];
+            let path = get_path(tabla, &dir);
             let mut instance: Select = Select::new(tabla.to_string(), query)?;
             mod_file(path, &mut instance)?;
             instance.print()?;
@@ -67,8 +64,8 @@ fn run(query: &String, dir:String) -> Result<(), TypeError>{
     }
 }
 
-fn show_error(query: &String){
-    let vec: Vec<&str> = query.trim().split_whitespace().collect::<Vec<&str>>();
+fn show_error(query: &str){
+    let vec: Vec<&str> = query.split_whitespace().collect::<Vec<&str>>();
 
     match vec[0] {
         "INSERT" => {

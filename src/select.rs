@@ -8,7 +8,7 @@ use condition::Expresion;
 use condition::evaluar;
 use crate::sort_condition;
 use sort_condition::SortExpresion;
-use sort_condition::make_sort_condition;
+use sort_condition::make_sort_expresion;
 
 /// La representación e implementación del comando Select de SQL
 #[derive(Debug)]
@@ -16,7 +16,7 @@ pub struct Select{
     columns: Vec<String>,
     conditions: Expresion,
     sort: bool,
-    sort_conditions: SortExpresion,
+    sort_expresion: SortExpresion,
     lines: Vec<String>
 }
 
@@ -27,46 +27,47 @@ impl Select{
     ///  
     /// Devuelve Select o InvalidSintax si la query no es valida
     /// 
-    pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
+    pub fn new(table:String, query: &str) -> Result<Self, TypeError>{
         
-        if !query.contains("FROM") || table == ""{ return Err(TypeError::InvalidSintax)};
+        if !query.contains("FROM") || table.is_empty(){ return Err(TypeError::InvalidSintax)};
 
         let mut str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
         let mut conditions: Expresion = Expresion::All;
         let mut sort = false;
-        let mut sort_conditions: SortExpresion = SortExpresion::None;
+        let mut sort_expresion: SortExpresion = SortExpresion::None;
         let lines: Vec<String> = Vec::new();
         let mut columns = Vec::new();
 
         let str_columns = str[0].split("SELECT").collect::<Vec<&str>>()[1].split("FROM").collect::<Vec<&str>>()[0].replace(" ", "");
 
-        if str_columns == ""{ return Err(TypeError::InvalidSintax)};
+        if str_columns.is_empty() { return Err(TypeError::InvalidSintax)};
 
-        if str_columns != "*"{columns = str_columns.split(",").map(|s| s.to_string()).collect::<Vec<String>>();}
+        if str_columns != "*" {columns = str_columns.split(",").map(|s| s.to_string()).collect::<Vec<String>>();}
 
         if query.contains("WHERE"){
             str = str[1].split("WHERE").collect::<Vec<&str>>()[1].split("ORDER BY").collect::<Vec<&str>>();
             conditions = get_conditions(str[0].replace(',', " AND ").as_str())?;
+            println!("{:?}", str);
             if str.len() > 1{
                 sort = true;
-                sort_conditions = make_sort_condition(str[1])?;
+                sort_expresion = make_sort_expresion(str[1])?;
             }
         }else if query.contains("ORDER BY"){
             sort = true;
-            sort_conditions = make_sort_condition(str[1].split("ORDER BY").collect::<Vec<&str>>()[1])?;
+            sort_expresion = make_sort_expresion(str[1].split("ORDER BY").collect::<Vec<&str>>()[1])?;
         }
 
-        Ok(Self{columns,conditions,sort, sort_conditions,lines,})
+        Ok(Self{columns,conditions,sort, sort_expresion,lines,})
     }
 
     pub fn print(&mut self) -> Result<(), TypeError>{
         if !self.sort {
             return Ok(())
         }
-        if self.lines.len() < 1{
+        if self.lines.is_empty(){
             return  Ok(())
         }
-        sort(&mut self.lines, &self.sort_conditions)?;
+        sort(&mut self.lines, &self.sort_expresion)?;
         for i in self.lines.iter(){
             println!("{}", &i);
         }
@@ -78,9 +79,9 @@ impl Select{
 /// Selecciona las columnas de la fila actual y las guarda devuelve en un String.
 /// Si no devuelve un InvalidColumn.
 /// 
-fn select_columns(actual: String, columns: &Vec<String>, index: &String) -> Result<String, TypeError>{
+fn select_columns(actual: String, columns: &[String], index: &str) -> Result<String, TypeError>{
 
-    if columns.len() == 0{
+    if columns.is_empty(){
         return Ok(actual)
     }
 
@@ -111,7 +112,7 @@ fn select_columns(actual: String, columns: &Vec<String>, index: &String) -> Resu
 /// Si no se printea directamente.
 /// 
 impl Query for Select{
-    fn operate(&mut self, index:&String, actual:String) -> Result<String, TypeError>{
+    fn operate(&mut self, index:&str, actual:String) -> Result<String, TypeError>{
 
         let condition: bool = match &self.conditions{
             Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", ""))?,
@@ -124,8 +125,8 @@ impl Query for Select{
         match condition{
             true => {
                 if self.sort{
-                    if self.lines.len() == 0{
-                        self.lines.push(select_columns(index.clone(), &self.columns, index)?);
+                    if self.lines.is_empty(){
+                        self.lines.push(select_columns(index.to_string(), &self.columns, index)?);
                     }
                     self.lines.push(select_columns(actual, &self.columns, index)?);
                 }else{

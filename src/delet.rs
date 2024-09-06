@@ -19,7 +19,7 @@ impl Delet{
     ///  
     /// Devuelve Delet o InvalidSintax si la query no es valida
     /// 
-    pub fn new(table:String, query: &String) -> Result<Self, TypeError>{
+    pub fn new(table:String, query: &str) -> Result<Self, TypeError>{
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
 
@@ -29,7 +29,7 @@ impl Delet{
         let conditions =  get_conditions(str[1].split("WHERE").collect::<Vec<&str>>()[1].replace(',', " AND ").as_str())?;
 
         Ok(Self {
-            conditions: conditions,
+            conditions,
         })
     }
 }
@@ -41,7 +41,7 @@ impl Delet{
 /// Si no devuelve la fila sin modificarla
 /// 
 impl Query for Delet{
-    fn operate(&mut self, index:&String, actual:String) -> Result<String, TypeError>{
+    fn operate(&mut self, index:&str, actual:String) -> Result<String, TypeError>{
 
         let condition: bool = match &self.conditions{
             Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", ""))?,
