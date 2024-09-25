@@ -97,7 +97,7 @@ fn obtener_columnas(query_vec: &str) -> Result<Vec<String>, TypeError> {
 
 fn obtener_sort_cond(
     query: &str,
-    query_vec: &Vec<&str>,
+    query_vec: &[&str],
 ) -> Result<(Expresion, SortExpresion), TypeError> {
     if query_vec.len() != 2 {
         return Err(TypeError::InvalidSintax);
@@ -183,7 +183,7 @@ fn seleccionar_columns(actual: &str, columns: &[String], index: &str) -> Result<
 ///
 impl Query for Select {
     fn operate(&mut self, index: &str, actual: &str) -> Result<String, TypeError> {
-        let condition: bool = evaluar_condicion(&self.conditions, index, &actual)?;
+        let condition: bool = evaluar_condicion(&self.conditions, index, actual)?;
 
         match condition {
             true => {

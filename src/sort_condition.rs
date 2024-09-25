@@ -32,7 +32,7 @@ fn hacer_condicion_sot(first_cond: &str, second_cond: String) -> Result<SortCond
             "DESC" => false,
             _ => return Err(TypeError::InvalidSintax),
         };
-    } else if first_cond_vec.len() != 1 || first_cond_vec.len() < 1 {
+    } else if first_cond_vec.len() != 1 || first_cond_vec.is_empty() {
         return Err(TypeError::InvalidSintax);
     }
 
@@ -53,7 +53,7 @@ pub fn hacer_expresion_sort(str: &str) -> Result<SortExpresion, TypeError> {
 
     if cond_vec.len() == 2 {
         second_cond = cond_vec[1].trim().to_string();
-    } else if cond_vec.len() < 1 {
+    } else if cond_vec.is_empty() {
         return Err(TypeError::InvalidSintax);
     }
 
@@ -69,24 +69,24 @@ pub fn hacer_expresion_sort(str: &str) -> Result<SortExpresion, TypeError> {
 fn es_mayor(ascendete: bool, mayor: &str, actual: &str) -> bool {
     if ascendete {
         if mayor.chars().all(|ch: char| ch.is_numeric()) && actual.chars().all(|c| c.is_numeric()) {
-            return cmp_int(
+            cmp_int(
                 &mayor.parse::<isize>().unwrap_or(0),
                 &actual.parse::<isize>().unwrap_or(0),
                 &Operador::Menor,
-            );
+            )
         } else {
-            return cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Menor);
+            cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Menor)
         }
+    } else if mayor.chars().all(|ch: char| ch.is_numeric())
+        && actual.chars().all(|c| c.is_numeric())
+    {
+        cmp_int(
+            &mayor.parse::<isize>().unwrap_or(0),
+            &actual.parse::<isize>().unwrap_or(0),
+            &Operador::Mayor,
+        )
     } else {
-        if mayor.chars().all(|ch: char| ch.is_numeric()) && actual.chars().all(|c| c.is_numeric()) {
-            return cmp_int(
-                &mayor.parse::<isize>().unwrap_or(0),
-                &actual.parse::<isize>().unwrap_or(0),
-                &Operador::Mayor,
-            );
-        } else {
-            return cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Mayor);
-        }
+        cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Mayor)
     }
 }
 
@@ -141,7 +141,7 @@ pub fn sort(lines: &mut [String], conds_exp: &SortExpresion) -> Result<(), TypeE
         for j in i + 1..lines.len() {
             let mayor: &str = lines[max].split(',').collect::<Vec<&str>>()[column as usize];
             let actual = lines[j].split(',').collect::<Vec<&str>>()[column as usize];
-            if mayor == actual && conds.second_condition != "" {
+            if mayor == actual && conds.second_condition.is_empty() {
                 if es_mayor_segcond(&conds.second_condition, lines, max, j)? {
                     max = j;
                 }

@@ -80,7 +80,7 @@ impl Update {
                 set: hacer_set(q)?,
             })
         } else {
-            return Err(TypeError::InvalidSintax);
+            Err(TypeError::InvalidSintax)
         }
     }
 }
@@ -119,7 +119,7 @@ fn update_str(
 ///
 impl Query for Update {
     fn operate(&mut self, index: &str, actual: &str) -> Result<String, TypeError> {
-        let condition: bool = evaluar_condicion(&self.conditions, index, &actual)?;
+        let condition: bool = evaluar_condicion(&self.conditions, index, actual)?;
 
         match condition {
             true => update_str(&self.set, index, actual),

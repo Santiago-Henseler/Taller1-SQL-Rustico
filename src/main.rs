@@ -27,80 +27,80 @@ fn get_path(archivo: &str, dir: &str) -> String {
 }
 
 fn insert(tabla: &str, dir: &str, query: &str) -> Result<(), TypeError> {
-    let path = get_path(tabla, &dir);
+    let path = get_path(tabla, dir);
     let mut instance: Insert = Insert::new(tabla.to_string(), query)?;
     agregar_reg(path, &mut instance)?;
-    return Ok(());
+    Ok(())
 }
 
 fn update(tabla: &str, dir: &str, query: &str) -> Result<(), TypeError> {
-    let path = get_path(tabla, &dir);
+    let path = get_path(tabla, dir);
     let mut instance: Update = Update::new(tabla.to_string(), query)?;
     mod_file(path, &mut instance)?;
-    return Ok(());
+    Ok(())
 }
 
 fn delete(tabla: &str, dir: &str, query: &str) -> Result<(), TypeError> {
-    let path = get_path(tabla, &dir);
+    let path = get_path(tabla, dir);
     let mut instance: Delet = Delet::new(tabla.to_string(), query)?;
     mod_file(path, &mut instance)?;
-    return Ok(());
+    Ok(())
 }
 
 fn select(dir: &str, query: &str) -> Result<(), TypeError> {
     if let Some(tb) = query.split(" FROM ").collect::<Vec<&str>>().get(1) {
-        if let Some(tabla) = tb.split_whitespace().collect::<Vec<&str>>().get(0) {
-            let path = get_path(tabla, &dir);
+        if let Some(tabla) = tb.split_whitespace().collect::<Vec<&str>>().first() {
+            let path = get_path(tabla, dir);
             let mut instance: Select = Select::new(tabla.to_string(), query)?;
             mod_file(path, &mut instance)?;
             instance.print()?;
-            return Ok(());
+            Ok(())
         } else {
-            return Err(TypeError::InvalidSintax);
+            Err(TypeError::InvalidSintax)
         }
     } else {
-        return Err(TypeError::InvalidSintax);
+        Err(TypeError::InvalidSintax)
     }
 }
 
-fn ejecutar(query: &str, dir: &String) -> Result<(), TypeError> {
+fn ejecutar(query: &str, dir: &str) -> Result<(), TypeError> {
     let vec: Vec<&str> = query.split_whitespace().collect::<Vec<&str>>();
 
-    if let Some(comando) = vec.get(0) {
+    if let Some(comando) = vec.first() {
         match comando.to_uppercase().as_str() {
             "INSERT" => {
                 if let Some(tabla) = vec.get(2) {
-                    return insert(*tabla, &dir, query);
+                    insert(tabla, dir, query)
                 } else {
-                    return Err(TypeError::InvalidSintax);
+                    Err(TypeError::InvalidSintax)
                 }
             }
             "UPDATE" => {
                 if let Some(tabla) = vec.get(1) {
-                    return update(*tabla, &dir, query);
+                    update(tabla, dir, query)
                 } else {
-                    return Err(TypeError::InvalidSintax);
+                    Err(TypeError::InvalidSintax)
                 }
             }
             "DELETE" => {
                 if let Some(tabla) = vec.get(2) {
-                    return delete(*tabla, &dir, query);
+                    delete(tabla, dir, query)
                 } else {
-                    return Err(TypeError::InvalidSintax);
+                    Err(TypeError::InvalidSintax)
                 }
             }
-            "SELECT" => return select(&dir, query),
-            _ => return Err(TypeError::InvalidSintax),
+            "SELECT" => select(dir, query),
+            _ => Err(TypeError::InvalidSintax),
         }
     } else {
-        return Err(TypeError::InvalidSintax);
+        Err(TypeError::InvalidSintax)
     }
 }
 
 fn show_error(query: &str) {
     let vec: Vec<&str> = query.split_whitespace().collect::<Vec<&str>>();
 
-    if let Some(comando) = vec.get(0) {
+    if let Some(comando) = vec.first() {
         match *comando {
             "INSERT" => {
                 println!("El comando se debe ejecutar como 'INSERT INTO tabla (col_0, col_1, col_2, col3) VALUES (new_0, new_1, new_2, new_3)'")

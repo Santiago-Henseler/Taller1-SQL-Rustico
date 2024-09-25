@@ -38,7 +38,7 @@ impl Delet {
             }
         }
 
-        return Err(TypeError::InvalidSintax);
+        Err(TypeError::InvalidSintax)
     }
 }
 
@@ -50,7 +50,7 @@ impl Delet {
 ///
 impl Query for Delet {
     fn operate(&mut self, index: &str, actual: &str) -> Result<String, TypeError> {
-        let condition: bool = evaluar_condicion(&self.conditions, index, &actual)?;
+        let condition: bool = evaluar_condicion(&self.conditions, index, actual)?;
 
         match condition {
             true => Ok("".to_string()),

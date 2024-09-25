@@ -54,7 +54,7 @@ fn limpiar_valor(str: &str) -> Vec<String> {
 /// Si no puede crear el par columna-valor devuelve un error de InvalidSintax
 ///
 fn hacer_kv(hash: &mut HashMap<String, String>, str: &[&str]) -> Result<(), TypeError> {
-    match (str.get(0), str.get(1)) {
+    match (str.first(), str.get(1)) {
         (Some(keys), Some(values)) => {
             let vec_keys: Vec<String> = limpiar_valor(keys);
             let vec_values: Vec<String> = limpiar_valor(values);
@@ -63,7 +63,7 @@ fn hacer_kv(hash: &mut HashMap<String, String>, str: &[&str]) -> Result<(), Type
                 return Err(TypeError::InvalidSintax);
             }
 
-            if vec_keys.len() < 1 || vec_keys.len() != vec_values.len() {
+            if vec_keys.is_empty() || vec_keys.len() != vec_values.len() {
                 return Err(TypeError::InvalidSintax);
             }
 
@@ -71,9 +71,9 @@ fn hacer_kv(hash: &mut HashMap<String, String>, str: &[&str]) -> Result<(), Type
                 hash.insert(vec_keys[i].to_string(), vec_values[i].to_string());
             }
 
-            return Ok(());
+            Ok(())
         }
-        _ => return Err(TypeError::InvalidSintax),
+        _ => Err(TypeError::InvalidSintax),
     }
 }
 
