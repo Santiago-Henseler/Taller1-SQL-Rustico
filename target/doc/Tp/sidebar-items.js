@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["get_path","main","run","show_error"],"mod":["condition","delet","insert","query","select","sort_condition","update"]};
