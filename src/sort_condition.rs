@@ -1,4 +1,7 @@
-use crate::{condition::{cmp_int, cmp_str, Operador}, query};
+use crate::{
+    condition::{cmp_int, cmp_str, Operador},
+    query,
+};
 use query::TypeError;
 
 /// La representación e implementación de las condiciones de ordenamiento
@@ -65,16 +68,24 @@ pub fn hacer_expresion_sort(str: &str) -> Result<SortExpresion, TypeError> {
 ///
 fn es_mayor(ascendete: bool, mayor: &str, actual: &str) -> bool {
     if ascendete {
-        if mayor.chars().all(|ch: char| ch.is_numeric()) && actual.chars().all(|c| c.is_numeric()){
-            return cmp_int(&mayor.parse::<isize>().unwrap_or(0), &actual.parse::<isize>().unwrap_or(0), &Operador::Menor)
-        }else{
-            return cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Menor)
+        if mayor.chars().all(|ch: char| ch.is_numeric()) && actual.chars().all(|c| c.is_numeric()) {
+            return cmp_int(
+                &mayor.parse::<isize>().unwrap_or(0),
+                &actual.parse::<isize>().unwrap_or(0),
+                &Operador::Menor,
+            );
+        } else {
+            return cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Menor);
         }
-    } else{
-        if mayor.chars().all(|ch: char| ch.is_numeric()) && actual.chars().all(|c| c.is_numeric()){
-            return cmp_int(&mayor.parse::<isize>().unwrap_or(0), &actual.parse::<isize>().unwrap_or(0), &Operador::Mayor)
-        }else{
-            return cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Mayor)
+    } else {
+        if mayor.chars().all(|ch: char| ch.is_numeric()) && actual.chars().all(|c| c.is_numeric()) {
+            return cmp_int(
+                &mayor.parse::<isize>().unwrap_or(0),
+                &actual.parse::<isize>().unwrap_or(0),
+                &Operador::Mayor,
+            );
+        } else {
+            return cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Mayor);
         }
     }
 }
@@ -88,7 +99,11 @@ fn es_mayor_segcond(
     max: usize,
     j: usize,
 ) -> Result<bool, TypeError> {
-    let column: isize = match lines[0].split(',').collect::<Vec<&str>>().iter().position(|x| x == second_cond)
+    let column: isize = match lines[0]
+        .split(',')
+        .collect::<Vec<&str>>()
+        .iter()
+        .position(|x| x == second_cond)
     {
         Some(n) => n as isize,
         None => return Err(TypeError::InvalidColumn),
@@ -104,7 +119,6 @@ fn es_mayor_segcond(
 /// Si no se puede ordenar devuelve InvalidSintax.
 ///
 pub fn sort(lines: &mut [String], conds_exp: &SortExpresion) -> Result<(), TypeError> {
-
     if lines.is_empty() {
         return Err(TypeError::InvalidSintax);
     };
@@ -113,7 +127,12 @@ pub fn sort(lines: &mut [String], conds_exp: &SortExpresion) -> Result<(), TypeE
         SortExpresion::None => return Err(TypeError::InvalidSintax),
     };
 
-    let column: isize = match lines[0].split(',').collect::<Vec<&str>>().iter().position(|&x| x == conds.column_index){
+    let column: isize = match lines[0]
+        .split(',')
+        .collect::<Vec<&str>>()
+        .iter()
+        .position(|&x| x == conds.column_index)
+    {
         Some(n) => n as isize,
         None => return Err(TypeError::InvalidColumn),
     };
@@ -122,7 +141,7 @@ pub fn sort(lines: &mut [String], conds_exp: &SortExpresion) -> Result<(), TypeE
         for j in i + 1..lines.len() {
             let mayor: &str = lines[max].split(',').collect::<Vec<&str>>()[column as usize];
             let actual = lines[j].split(',').collect::<Vec<&str>>()[column as usize];
-            if mayor == actual && conds.second_condition != ""{
+            if mayor == actual && conds.second_condition != "" {
                 if es_mayor_segcond(&conds.second_condition, lines, max, j)? {
                     max = j;
                 }
