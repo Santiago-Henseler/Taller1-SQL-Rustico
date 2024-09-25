@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs::OpenOptions;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
 use std::io::Write;
 
 use crate::query;
@@ -22,25 +22,29 @@ impl Insert{
     /// 
     pub fn new(table:String, query: &str) -> Result<Self, TypeError>{
        
-        if !query.contains("VALUES"){
+        if !query.contains(" VALUES ") || !query.contains(" INTO "){
             return Err(TypeError::InvalidSintax)
         }
         
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
-        let mut hash: HashMap<String, String> = HashMap::new();
+        let mut kv_to_insert: HashMap<String, String> = HashMap::new();
         let s = str[1].split("VALUES").collect::<Vec<&str>>();
 
-        make_kv(&mut hash, &s)?;
+        hacer_kv(&mut kv_to_insert, &s)?;
 
-        if hash.is_empty(){
+        if kv_to_insert.is_empty(){
             return Err(TypeError::InvalidSintax)
         }
 
         Ok(Self {
-            values: hash,
+            values: kv_to_insert,
         })
     }
 
+}
+
+fn limpiar_valor(str: &str) -> Vec<String> {
+    str.replace(['(', ')'], "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>()
 }
 
 /// 
@@ -48,20 +52,30 @@ impl Insert{
 /// 
 /// Si no puede crear el par columna-valor devuelve un error de InvalidSintax
 /// 
-pub fn make_kv(hash: &mut HashMap<String,String>, str: &[&str]) -> Result<(), TypeError>{
+fn hacer_kv(hash: &mut HashMap<String,String>, str: &[&str]) -> Result<(), TypeError>{
     
-    let keys = str[0].replace(['(', ')'], "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>();
-    let values = str[1].replace(['(', ')'], "").split(',').map(|s: &str| s.to_string().replace(" ", "").replace("'","")).collect::<Vec<String>>();
-  
-    if values[0].is_empty() || keys.len() < 2{
-        return Err(TypeError::InvalidSintax)
-    }
+    match (str.get(0), str.get(1)) {
+        (Some(keys), Some(values)) => {
 
-    for i in 0..keys.len(){
-        hash.insert(keys[i].to_string(), values[i].to_string());
-    }
+            let vec_keys: Vec<String> = limpiar_valor(keys);
+            let vec_values: Vec<String> = limpiar_valor(values);  
 
-    Ok(())
+            if vec_values.is_empty() {
+                return Err(TypeError::InvalidSintax)
+            }
+
+            if vec_keys.len() < 1 || vec_keys.len() != vec_values.len(){
+                return Err(TypeError::InvalidSintax)
+            }
+        
+            for i in 0..vec_keys.len(){
+                hash.insert(vec_keys[i].to_string(), vec_values[i].to_string());
+            }
+        
+            return Ok(())
+        },
+        _ => return Err(TypeError::InvalidSintax),
+    }
 }
 
 ///
@@ -71,7 +85,7 @@ pub fn make_kv(hash: &mut HashMap<String,String>, str: &[&str]) -> Result<(), Ty
 /// Y si alguna columna no existe devuelve InvalidColumn
 /// 
 impl Query for Insert{
-    fn operate(&mut self, index:&str, _actual:String) -> Result<String, TypeError>{
+    fn operate(&mut self, index:&str, _actual:&str) -> Result<String, TypeError>{
         let mut word: String = String::new();
         let mut i = 0;
 
@@ -99,7 +113,7 @@ impl Query for Insert{
 /// 
 /// Si no logra insertarla devuelve el tipo de error correspondiente
 /// 
-pub fn insert_reg(path: String, instance: &mut Insert)-> Result<(), TypeError>{
+pub fn agregar_reg(path: String, instance: &mut Insert)-> Result<(), TypeError>{
 
     let mut file = OpenOptions::new().read(true).append(true).open(&path).map_err(|_|  TypeError::InvalidaTable)?;
     let mut reader = BufReader::new(&file);
@@ -107,7 +121,16 @@ pub fn insert_reg(path: String, instance: &mut Insert)-> Result<(), TypeError>{
     let mut column_index = String::new();
     reader.read_line(&mut column_index).map_err(|_| TypeError::Error)?;
 
-    writeln!(file, "{}", instance.operate(&column_index, "".to_string())?).map_err(|_| TypeError::Error)?;
+    file.seek(SeekFrom::End(-1)).map_err(|_| TypeError::Error)?;
+
+    let mut ultima = [0; 1];
+    file.read_exact(&mut ultima).map_err(|_| TypeError::Error)?;
+
+    if ultima != [b'\n'] {
+        writeln!(file).map_err(|_| TypeError::Error)?;
+    }
+
+    writeln!(file, "{}", instance.operate(&column_index, "")?).map_err(|_| TypeError::Error)?;
     Ok(())
 }
 
@@ -149,7 +172,7 @@ fn operate_test1(){
     let str = String::from("INSERT INTO tabla1 (id, id_cliente, producto, cantidad) VALUES (id, id_cliente, producto, cantidad)");
     let mut instance:Insert  = Insert::new("tabla1".to_string(), &str).unwrap();
     
-    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string()).unwrap();
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "").unwrap();
 
     assert_eq!(word, "id,id_cliente,producto,cantidad".to_string());
 }
@@ -159,7 +182,7 @@ fn operate_test2(){
     let str = String::from("INSERT INTO tabla1 (id, id_cliente) VALUES (id, id_cliente)");
     let mut instance:Insert  = Insert::new("tabla1".to_string(), &str).unwrap();
     
-    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string()).unwrap();
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "").unwrap();
 
     assert_eq!(word, "id,id_cliente,NONE,NONE".to_string());
 }
@@ -169,16 +192,10 @@ fn operate_test3(){
     let str = String::from("INSERT INTO tabla1 (id, calves) VALUES (id, id_cliente)");
     let mut instance:Insert  = Insert::new("tabla1".to_string(), &str).unwrap();
     
-    let word: Result<String, TypeError> = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "".to_string());
+    let word: Result<String, TypeError> = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "");
 
     match word {
         Err(TypeError::InvalidColumn) => assert!(true),
         _=> assert!(false),
     }
-}
-
-//crear este test
-#[test]
-fn insert_reg_test(){
-    assert!(true);
 }

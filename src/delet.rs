@@ -2,9 +2,9 @@ use crate::query;
 use query::Query;
 use query::TypeError;
 use crate::condition;
-use condition::get_conditions;
+use condition::obtener_condicion;
 use condition::Expresion;
-use condition::evaluar;
+use condition::evaluar_condicion;
 
 /// La representación e implementación del comando Delet de SQL
 #[derive(Debug)]
@@ -21,16 +21,25 @@ impl Delet{
     /// 
     pub fn new(table:String, query: &str) -> Result<Self, TypeError>{
         
-        let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
+        let query_vec: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
 
-        if !query.contains("WHERE"){
-            return Err(TypeError::InvalidSintax)
+        if !query.contains(" WHERE "){
+            return Ok(Self {
+                conditions: Expresion::All,
+            })
         }
-        let conditions =  get_conditions(str[1].split("WHERE").collect::<Vec<&str>>()[1].replace(',', " AND ").as_str())?;
 
-        Ok(Self {
-            conditions,
-        })
+        if let Some(q) = query_vec.get(1){
+            let query_slice = q.split("WHERE").collect::<Vec<&str>>();
+
+            if let Some(cond) = query_slice.get(1){
+                return Ok(Self {
+                    conditions: obtener_condicion(cond.replace(',', " AND ").as_str())?,
+                })
+            }
+        } 
+
+        return Err(TypeError::InvalidSintax)
     }
 }
 
@@ -41,19 +50,13 @@ impl Delet{
 /// Si no devuelve la fila sin modificarla
 /// 
 impl Query for Delet{
-    fn operate(&mut self, index:&str, actual:String) -> Result<String, TypeError>{
+    fn operate(&mut self, index:&str, actual:&str) -> Result<String, TypeError>{
 
-        let condition: bool = match &self.conditions{
-            Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", ""))?,
-            Expresion::And((c_izq, c_der)) => evaluar(c_izq, index, &actual.replace("\n", ""))? && evaluar(c_der, index, &actual.replace("\n", ""))?,
-            Expresion::Not(c) => !evaluar(c, index, &actual.replace("\n", ""))?,
-            Expresion::Or((c_izq, c_der))=> evaluar(c_izq, index, &actual.replace("\n", ""))? || evaluar(c_der, index, &actual.replace("\n", ""))?,
-            Expresion::All => true,
-        };
+        let condition: bool = evaluar_condicion(&self.conditions, index, &actual)?;
 
         match condition{
             true => Ok("".to_string()),
-            false => Ok(actual),
+            false => Ok(actual.to_string()),
         }
     }
 }
@@ -96,7 +99,7 @@ fn operate_test1(){
     let str = String::from("DELET FROM tabla1 WHERE id_cliente = 1");
     let mut instance:Delet  = Delet::new("tabla1".to_string(), &str).unwrap();
 
-    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1".to_string()).unwrap();
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1").unwrap();
 
     assert_eq!(word, "".to_string());
 }
@@ -106,7 +109,7 @@ fn operate_test2(){
     let str = String::from("Delet tabla1 SET id = 99 WHERE id_cliente = 3");
     let mut instance:Delet  = Delet::new("tabla1".to_string(), &str).unwrap();
     
-    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1".to_string()).unwrap();
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1").unwrap();
 
     assert_eq!(word, "101,1,Laptop,1".to_string());
 }

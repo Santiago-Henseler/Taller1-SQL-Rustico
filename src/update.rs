@@ -4,9 +4,9 @@ use crate::query;
 use crate::condition;
 use query::Query;
 use query::TypeError;
-use condition::get_conditions;
+use condition::obtener_condicion;
 use condition::Expresion;
-use condition::evaluar;
+use condition::evaluar_condicion;
 
 
 /// La representación e implementación del comando Update de SQL
@@ -21,7 +21,7 @@ pub struct Update{
 /// 
 /// Si no puede crear el par columna-valor devuelve un error de InvalidSintax
 /// 
-fn make_kv(hash: &mut HashMap<String,String>, str: &str) -> Result<(), TypeError>{
+fn hacer_kv(hash: &mut HashMap<String,String>, str: &str) -> Result<(), TypeError>{
    
     for s in str.split(','){
         let vecs = s.split('=').collect::<Vec<&str>>();
@@ -34,6 +34,19 @@ fn make_kv(hash: &mut HashMap<String,String>, str: &str) -> Result<(), TypeError
     Ok(())
 }
 
+fn hacer_set(setstr: &str ) -> Result<HashMap<String, String>, TypeError>{
+
+    let mut kv_set: HashMap<String, String> = HashMap::new();
+
+    if let Some(set_values) = setstr.split("SET").collect::<Vec<&str>>().get(1){
+        hacer_kv(&mut kv_set, set_values)?;
+    }else{
+        return Err(TypeError::InvalidSintax)
+    }
+
+    Ok(kv_set)
+}
+
 impl Update{
     /// Crea la representación de Update 
     ///
@@ -43,20 +56,34 @@ impl Update{
     /// 
     pub fn new(table:String, query: &str) -> Result<Self, TypeError>{
 
-        if !query.contains("WHERE") || !query.contains("SET"){
+        if !query.contains(" SET "){
             return Err(TypeError::InvalidSintax)
         }
-        let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>()[1].split("WHERE").collect::<Vec<&str>>();
 
-        let mut hash: HashMap<String, String> = HashMap::new();
-        make_kv(&mut hash, str[0].split("SET").collect::<Vec<&str>>()[1])?;
+        let query_vec: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
 
-        let conditions = get_conditions(str[1].replace(',', " AND ").as_str())?;
- 
-        Ok(Self {
-            conditions,
-            set: hash
-        })
+        if let Some(q) = query_vec.get(1){
+            
+            if q.contains(" WHERE "){
+                let query_slice = q.split("WHERE").collect::<Vec<&str>>();
+
+                if query_slice.len() != 2 {
+                    return Err(TypeError::InvalidSintax)
+                }
+
+                return Ok(Self {
+                    conditions: obtener_condicion(query_slice[1].replace(',', " AND ").as_str())?,
+                    set: hacer_set(query_slice[0])?
+                })
+            }
+
+            Ok(Self {
+                conditions: Expresion::All,
+                set: hacer_set(q)?
+            })
+        }else{
+            return Err(TypeError::InvalidSintax)
+        }
     }
 }
 
@@ -65,7 +92,7 @@ impl Update{
 /// 
 /// Devuelve la fila modificada 
 /// 
-fn update_str(hash: &HashMap<String,String>, index: &str, actual: String) -> Result<String, TypeError>{
+fn update_str(hash: &HashMap<String,String>, index: &str, actual: &str) -> Result<String, TypeError>{
 
     let mut new_string: String = String::from("");
 
@@ -90,19 +117,13 @@ fn update_str(hash: &HashMap<String,String>, index: &str, actual: String) -> Res
 /// Si no devuelve la fila sin modificarla
 /// 
 impl Query for Update{
-    fn operate(&mut self, index:&str, actual:String) -> Result<String, TypeError>{
+    fn operate(&mut self, index:&str, actual:&str) -> Result<String, TypeError>{
 
-        let condition: bool = match &self.conditions{
-            Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", ""))?,
-            Expresion::And((c_izq, c_der)) => evaluar(c_izq, index, &actual.replace("\n", ""))? && evaluar(c_der, index, &actual.replace("\n", ""))?,
-            Expresion::Not(c) => !evaluar(c, index, &actual.replace("\n", ""))?,
-            Expresion::Or((c_izq, c_der))=> evaluar(c_izq, index, &actual.replace("\n", ""))? || evaluar(c_der, index, &actual.replace("\n", ""))?,
-            Expresion::All => true,
-        };
+        let condition: bool = evaluar_condicion(&self.conditions, index, &actual)?;
 
         match condition{
             true => update_str(&self.set, index, actual),
-            false => Ok(actual),
+            false => Ok(actual.to_string()),
         }
     }
 }
@@ -156,7 +177,7 @@ fn operate_test1(){
     let str = String::from("UPDATE tabla1 SET id = 99, id_cliente = 10 WHERE id_cliente = 1");
     let mut instance:Update  = Update::new("tabla1".to_string(), &str).unwrap();
 
-    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1".to_string()).unwrap();
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1").unwrap();
 
     assert_eq!(word, "99,10,Laptop,1".to_string());
 }
@@ -166,7 +187,7 @@ fn operate_test2(){
     let str = String::from("UPDATE tabla1 SET id = 99 WHERE id_cliente = 3");
     let mut instance:Update  = Update::new("tabla1".to_string(), &str).unwrap();
     
-    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1".to_string()).unwrap();
+    let word = instance.operate(&"id,id_cliente,producto,cantidad".to_string(), "101,1,Laptop,1").unwrap();
 
     assert_eq!(word, "101,1,Laptop,1".to_string());
 }

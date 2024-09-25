@@ -21,67 +21,100 @@ pub struct Condicion {
 #[derive(Debug)]
 pub enum Expresion{
     Condicion(Condicion),
-    And((Condicion, Condicion)),
-    Or((Condicion, Condicion)),
-    Not(Condicion),
+    Not(Box<Expresion>),
+    And(Box<Expresion>, Box<Expresion>),
+    Or(Box<Expresion>, Box<Expresion>),
     All,
+}
+
+fn separar_condition(str: &str)-> (Operador, Vec<&str>){
+
+    if str.contains(">="){
+        return (Operador::MayorOIgual, str.split(">=").collect::<Vec<&str>>())
+    }else if str.contains("<=") {
+        return (Operador::MenorOIgual, str.split("<=").collect::<Vec<&str>>())
+    }else if str.contains("<") {
+        return (Operador::Menor,str.split("<").collect::<Vec<&str>>())
+    }else if str.contains(">") {
+        return (Operador::Mayor, str.split(">").collect::<Vec<&str>>())
+    }else if str.contains("=") {
+        return (Operador::Igual, str.split("=").collect::<Vec<&str>>())
+    }
+    (Operador::Error, Vec::<&str>::new())
 }
 
 /// 
 /// Crea la Condicion de busqueda
 /// Si no se puede crear devuelve InvalidSintax.
 /// 
-fn make_condition(str: &str) -> Result<Condicion, TypeError>{
+fn hacer_condition(str: &str) -> Result<Condicion, TypeError>{
 
-    let strvec: Vec<&str> = str.split_whitespace().collect::<Vec<&str>>();
+    let str_limpio: String =  str.replace(" ", "");
 
-    if strvec.len() != 3{
+    let (op, strvec) =  separar_condition(&str_limpio);
+
+    if strvec.len() != 2{
         return Err(TypeError::InvalidSintax)
     }
 
-    let op: Operador = match strvec[1] {
-        "="  => Operador::Igual,
-        ">=" => Operador::MayorOIgual,
-        "<=" => Operador::MenorOIgual,
-        "<"  => Operador::Menor,
-        ">"  => Operador::Mayor,
-        _    => Operador::Error 
-    };
-
     match op{
         Operador::Error => Err(TypeError::InvalidSintax),
-        _ => Ok(Condicion{
+        op => Ok(Condicion{
             column_index: strvec[0].to_string(),
             operador: op,
-            value: strvec[2].to_string()
+            value: strvec[1].replace("'", "").to_string()
         }),
     }
+}
+
+fn exp(exp_vec: Vec<&str>) ->  Result<Vec<Expresion>, TypeError> {
+    let mut exprs: Vec<Expresion> = Vec::new();
+    for part in exp_vec {
+        exprs.push(obtener_condicion(part)?);
+    }
+    Ok(exprs)
 }
 
 /// 
 /// Crea la Expresion de busqueda
 /// Si no se puede crear devuelve InvalidSintax.
 /// 
-pub fn get_conditions(condition: &str) -> Result<Expresion, TypeError>{
+pub fn obtener_condicion(condition: &str) -> Result<Expresion, TypeError> {
+    let cond_cls = condition.trim();
 
-    if condition.contains("AND"){
-        let str: Vec<&str> = condition.split("AND").collect::<Vec<&str>>();
-        Ok(Expresion::And((make_condition(str[0])?, make_condition(str[1])?)))
-    }else if condition.contains("NOT"){
-        let str: Vec<&str> = condition.split("NOT").collect::<Vec<&str>>();
-        Ok(Expresion::Not(make_condition(str[1])?))
-    }else if condition.contains("OR"){
-        let str: Vec<&str> = condition.split("OR").collect::<Vec<&str>>();
-        Ok(Expresion::Or((make_condition(str[0])?, make_condition(str[1])?)))
-    }else{
-       Ok(Expresion::Condicion(make_condition(condition)?))
+    if cond_cls.starts_with("(") && cond_cls.ends_with(")") {
+        return obtener_condicion(&cond_cls[1..cond_cls.len()-1]);
     }
+
+    if cond_cls.starts_with("NOT ") {
+        let cond_not = cond_cls.strip_prefix("NOT ").ok_or(TypeError::InvalidSintax)?;
+        let expr = obtener_condicion(cond_not)?;
+        return Ok(Expresion::Not(Box::new(expr)));
+    }
+
+    let and: Vec<&str> = cond_cls.split(" AND ").collect::<Vec<&str>>();
+    if and.len() == 2 {
+        let mut exprs = exp(and)?;
+        if exprs.len() != 2{ return Err(TypeError::InvalidSintax)};
+        return Ok(Expresion::And(Box::new(exprs.remove(0)), Box::new(exprs.remove(0))));
+    }
+
+    let or: Vec<&str> = cond_cls.split(" OR ").collect::<Vec<&str>>();
+    if or.len() == 2 {
+        let mut exprs = exp(or)?;
+        if exprs.len() != 2 {return Err(TypeError::InvalidSintax)};
+        return Ok(Expresion::Or(Box::new(exprs.remove(0)), Box::new(exprs.remove(0))));
+    }
+
+    Ok(Expresion::Condicion(hacer_condition(cond_cls)?))
 }
+
 
 /// 
 /// Compara los Stings recibidos
 /// 
-fn cmp_str(compare:&String, actual: &String, operador:&Operador) -> bool{
+pub fn cmp_str(compare:&String, actual: &String, operador:&Operador) -> bool{
+
     match operador {
         Operador::Igual => compare == actual,
         Operador::Mayor => compare < actual,
@@ -95,7 +128,7 @@ fn cmp_str(compare:&String, actual: &String, operador:&Operador) -> bool{
 /// 
 /// Compara los enteros recibidos
 /// 
-fn cmp_int(compare:&isize, actual: &isize, operador:&Operador) -> bool{
+pub fn cmp_int(compare:&isize, actual: &isize, operador:&Operador) -> bool{
     match operador {
         Operador::Igual => compare == actual,
         Operador::Mayor => compare < actual,
@@ -110,7 +143,7 @@ fn cmp_int(compare:&isize, actual: &isize, operador:&Operador) -> bool{
 /// Evalua la Condicion de busqueda
 /// Si no se encuentra la columna a comparar devuelve InvalidColumn
 /// 
-pub fn evaluar(c: &Condicion, index:&str, actual: &str) -> Result<bool, TypeError>{
+fn evaluar(c: &Condicion, index:&str, actual: &str) -> Result<bool, TypeError>{
 
     let mut eval = false;
     let act_vec = actual.split(",").collect::<Vec<&str>>();
@@ -131,4 +164,18 @@ pub fn evaluar(c: &Condicion, index:&str, actual: &str) -> Result<bool, TypeErro
     }
 
     Ok(eval)
+}
+
+pub fn evaluar_condicion(cond: &Expresion, index: &str, actual: &str) -> Result<bool, TypeError> {
+    let actual_cls = actual.replace("\n", "");
+
+    let condition = match cond {
+        Expresion::Condicion(c) => evaluar(c, index, &actual_cls)?,
+        Expresion::And(c_izq, c_der) => evaluar_condicion(c_izq, index, &actual_cls)? && evaluar_condicion(c_der, index, &actual_cls)?,
+        Expresion::Not(c) => !evaluar_condicion(c, index, &actual_cls)?,
+        Expresion::Or(c_izq, c_der) => evaluar_condicion(c_izq, index, &actual_cls)? || evaluar_condicion(c_der, index, &actual_cls)?,
+        Expresion::All => true,
+    };
+
+    Ok(condition)
 }

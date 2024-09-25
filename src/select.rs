@@ -3,19 +3,18 @@ use crate::sort_condition::sort;
 use query::Query;
 use query::TypeError;
 use crate::condition;
-use condition::get_conditions;
+use condition::obtener_condicion;
 use condition::Expresion;
-use condition::evaluar;
+use condition::evaluar_condicion;
 use crate::sort_condition;
 use sort_condition::SortExpresion;
-use sort_condition::make_sort_expresion;
+use sort_condition::hacer_expresion_sort;
 
 /// La representación e implementación del comando Select de SQL
 #[derive(Debug)]
 pub struct Select{
     columns: Vec<String>,
     conditions: Expresion,
-    sort: bool,
     sort_expresion: SortExpresion,
     lines: Vec<String>
 }
@@ -29,68 +28,113 @@ impl Select{
     /// 
     pub fn new(table:String, query: &str) -> Result<Self, TypeError>{
         
-        if !query.contains("FROM") || table.is_empty(){ return Err(TypeError::InvalidSintax)};
+        if table.is_empty(){ return Err(TypeError::InvalidaTable)};
 
-        let mut str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
-        let mut conditions: Expresion = Expresion::All;
-        let mut sort = false;
-        let mut sort_expresion: SortExpresion = SortExpresion::None;
-        let lines: Vec<String> = Vec::new();
-        let mut columns = Vec::new();
+        let query_vec: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
 
-        let str_columns = str[0].split("SELECT").collect::<Vec<&str>>()[1].split("FROM").collect::<Vec<&str>>()[0].replace(" ", "");
+        if !query.contains(" FROM ") || query_vec.is_empty(){ return Err(TypeError::InvalidSintax)};
 
-        if str_columns.is_empty() { return Err(TypeError::InvalidSintax)};
-
-        if str_columns != "*" {columns = str_columns.split(",").map(|s| s.to_string()).collect::<Vec<String>>();}
-
-        if query.contains("WHERE"){
-            str = str[1].split("WHERE").collect::<Vec<&str>>()[1].split("ORDER BY").collect::<Vec<&str>>();
-            conditions = get_conditions(str[0].replace(',', " AND ").as_str())?;
-            println!("{:?}", str);
-            if str.len() > 1{
-                sort = true;
-                sort_expresion = make_sort_expresion(str[1])?;
-            }
-        }else if query.contains("ORDER BY"){
-            sort = true;
-            sort_expresion = make_sort_expresion(str[1].split("ORDER BY").collect::<Vec<&str>>()[1])?;
-        }
-
-        Ok(Self{columns,conditions,sort, sort_expresion,lines,})
+        let (conditions, sort_expresion) = obtener_sort_cond(query, &query_vec)?;
+        
+        Ok(Self{
+            columns: obtener_columnas(query_vec[0])?,
+            conditions,
+            sort_expresion,
+            lines: Vec::new()
+        })
     }
 
     pub fn print(&mut self) -> Result<(), TypeError>{
-        if !self.sort {
+
+        if self.lines.is_empty(){
             return Ok(())
         }
-        if self.lines.is_empty(){
-            return  Ok(())
+       
+        match self.sort_expresion {
+            SortExpresion::None => (),
+            _ => sort(&mut self.lines, &self.sort_expresion)?
         }
-        sort(&mut self.lines, &self.sort_expresion)?;
-        for i in self.lines.iter(){
-            println!("{}", &i);
+
+        let mut index = "";
+
+        for (i, s) in self.lines.iter().enumerate(){
+            if i == 0{
+                index = s.as_str();
+                continue;
+            }
+            println!("{}", seleccionar_columns(s, &self.columns, index)?);
         }
         Ok(())
     }
+}
+
+fn obtener_columnas(query_vec: &str) -> Result<Vec<String>, TypeError>{
+    let mut columns: Vec<String> = Vec::new();
+
+    if let Some(vec_columns) = query_vec.split("SELECT").collect::<Vec<&str>>().get(1){
+        
+        if vec_columns.is_empty(){return Err(TypeError::InvalidSintax)};
+
+        let str_columns = vec_columns.split("FROM").collect::<Vec<&str>>()[0].replace(" ", "");
+
+        if str_columns.is_empty() { return Err(TypeError::InvalidSintax)};
+
+        if str_columns != "*" {
+            columns = str_columns.split(",").map(|s| s.to_string()).collect::<Vec<String>>();
+        }
+    }
+
+    Ok(columns)
+}
+
+fn obtener_sort_cond(query: &str, query_vec: &Vec<&str>) -> Result<(Expresion, SortExpresion), TypeError>{
+
+    if query_vec.len() != 2{return Err(TypeError::InvalidSintax)};
+
+    if query.contains(" WHERE ") && query.contains(" ORDER BY "){
+
+        if let Some(conds) = query_vec[1].split("WHERE").collect::<Vec<&str>>().get(1){
+            let conds_vec = conds.split("ORDER BY").collect::<Vec<&str>>();
+
+            if conds_vec.len() != 2{return Err(TypeError::InvalidSintax)};
+
+            return Ok((obtener_condicion(conds_vec[0].replace(',', " AND ").as_str())?, hacer_expresion_sort(conds_vec[1])?))
+        }
+    }else if query.contains(" WHERE "){
+
+        let where_vec = query_vec[1].split("WHERE").collect::<Vec<&str>>();
+
+        if where_vec.len() != 2{ return Err(TypeError::InvalidSintax)}; 
+
+        return Ok((obtener_condicion(where_vec[1].replace(',', " AND ").as_str())?, SortExpresion::None))
+
+    }else if query.contains(" ORDER BY "){
+        return Ok((Expresion::All, hacer_expresion_sort(query_vec[1].split("ORDER BY").collect::<Vec<&str>>()[1])?))
+    }else{
+        return Ok((Expresion::All, SortExpresion::None))
+    }
+
+    Err(TypeError::InvalidSintax)
 }
 
 ///
 /// Selecciona las columnas de la fila actual y las guarda devuelve en un String.
 /// Si no devuelve un InvalidColumn.
 /// 
-fn select_columns(actual: String, columns: &[String], index: &str) -> Result<String, TypeError>{
+fn seleccionar_columns(actual: &str, columns: &[String], index: &str) -> Result<String, TypeError>{
 
     if columns.is_empty(){
-        return Ok(actual)
+        return Ok(actual.to_string())
     }
 
     let mut new_string: String = String::from("");
     let mut col_select = 0;
 
     let act_vec = actual.split(",").collect::<Vec<&str>>();
-    for (i, col) in index.replace("\n", "").split(",").enumerate(){
-        if columns.contains(&col.to_string()){
+
+    for col in columns{
+        
+        if let Some(i) = index.replace("\n", "").split(",").collect::<Vec<&str>>().iter().position(|&x| x == col) {
             new_string.push_str(act_vec[i]);
             new_string.push(',');
             col_select += 1;
@@ -108,33 +152,24 @@ fn select_columns(actual: String, columns: &[String], index: &str) -> Result<Str
 ///
 /// La implementación de operate para Select
 /// 
-/// Si se cumple la condición selecciona la fila y si se quiere ordenar usa select_columns y agrega ese valor al vector de Select.
+/// Si se cumple la condición selecciona la fila y si se quiere ordenar usa seleccionar_columns y agrega ese valor al vector de Select.
 /// Si no se printea directamente.
 /// 
 impl Query for Select{
-    fn operate(&mut self, index:&str, actual:String) -> Result<String, TypeError>{
+    fn operate(&mut self, index:&str, actual:&str) -> Result<String, TypeError>{
 
-        let condition: bool = match &self.conditions{
-            Expresion::Condicion(c) => evaluar(c, index, &actual.replace("\n", ""))?,
-            Expresion::And((c_izq, c_der)) => evaluar(c_izq, index, &actual.replace("\n", ""))? && evaluar(c_der, index, &actual.replace("\n", ""))?,
-            Expresion::Not(c) => !evaluar(c, index, &actual.replace("\n", ""))?,
-            Expresion::Or((c_izq, c_der))=> evaluar(c_izq, index, &actual.replace("\n", ""))? || evaluar(c_der, index, &actual.replace("\n", ""))?,
-            Expresion::All => true,
-        };
+        let condition: bool = evaluar_condicion(&self.conditions, index, &actual)?;
 
         match condition{
             true => {
-                if self.sort{
-                    if self.lines.is_empty(){
-                        self.lines.push(select_columns(index.to_string(), &self.columns, index)?);
-                    }
-                    self.lines.push(select_columns(actual, &self.columns, index)?);
-                }else{
-                    println!("{}", actual);
+                if self.lines.is_empty(){
+                    self.lines.push(index.to_string());
                 }
+                self.lines.push(actual.to_string());
             },
             false => (),
         }
+
         Ok("".to_string())
     }
 }
