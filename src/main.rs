@@ -8,7 +8,7 @@ mod select;
 mod sort_condition;
 mod update;
 
-use delet::Delet;
+use delet::Delete;
 use insert::agregar_reg;
 use insert::Insert;
 use query::mod_file;
@@ -42,7 +42,7 @@ fn update(tabla: &str, dir: &str, query: &str) -> Result<(), TypeError> {
 
 fn delete(tabla: &str, dir: &str, query: &str) -> Result<(), TypeError> {
     let path = get_path(tabla, dir);
-    let mut instance: Delet = Delet::new(tabla.to_string(), query)?;
+    let mut instance: Delete = Delete::new(tabla.to_string(), query)?;
     mod_file(path, &mut instance)?;
     Ok(())
 }
