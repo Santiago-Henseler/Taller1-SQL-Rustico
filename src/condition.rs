@@ -64,7 +64,10 @@ fn hacer_condition(str: &str) -> Result<Condicion, TypeError> {
         Operador::Error => Err(TypeError::InvalidSintax),
         op => Ok(Condicion {
             operador: op,
-            valores: (strvec[0].replace("'", "").to_string(), strvec[1].replace("'", "").to_string()),
+            valores: (
+                strvec[0].replace("'", "").to_string(),
+                strvec[1].replace("'", "").to_string(),
+            ),
         }),
     }
 }
@@ -130,22 +133,33 @@ pub fn obtener_condicion(condition: &str) -> Result<Expresion, TypeError> {
 fn evaluar(c: &Condicion, index: &str, actual: &str) -> Result<bool, TypeError> {
     let act_vec: Vec<&str> = actual.split(",").collect::<Vec<&str>>();
 
-    let (indice1, indice2) = obtener_indice(index, &c.valores.0,&c.valores.1)?;
+    let (indice1, indice2) = obtener_indice(index, &c.valores.0, &c.valores.1)?;
 
-    if indice1.is_empty() && indice2.is_empty(){
-        return Ok(comparar(&c.valores.0, &c.valores.1, &c.operador))
+    if indice1.is_empty() && indice2.is_empty() {
+        return Ok(comparar(&c.valores.0, &c.valores.1, &c.operador));
     }
 
     let columns: Vec<&str> = index.split(",").collect::<Vec<&str>>();
 
-    if indice1 == c.valores.0 && indice2 != c.valores.1{
-        Ok(comparar( &c.valores.1, act_vec[obtener_posicion_indice(&columns, indice1)],&c.operador))
-    }else if indice1 != c.valores.0 && indice2 == c.valores.1{
-        Ok(comparar(  act_vec[obtener_posicion_indice(&columns, indice1)], &c.valores.0,&c.operador))
-    }else{
-        Ok(comparar( act_vec[obtener_posicion_indice(&columns, indice2)], act_vec[obtener_posicion_indice(&columns, indice1)],&c.operador))
+    if indice1 == c.valores.0 && indice2 != c.valores.1 {
+        Ok(comparar(
+            &c.valores.1,
+            act_vec[obtener_posicion_indice(&columns, indice1)],
+            &c.operador,
+        ))
+    } else if indice1 != c.valores.0 && indice2 == c.valores.1 {
+        Ok(comparar(
+            act_vec[obtener_posicion_indice(&columns, indice1)],
+            &c.valores.0,
+            &c.operador,
+        ))
+    } else {
+        Ok(comparar(
+            act_vec[obtener_posicion_indice(&columns, indice2)],
+            act_vec[obtener_posicion_indice(&columns, indice1)],
+            &c.operador,
+        ))
     }
-
 }
 
 pub fn evaluar_condicion(cond: &Expresion, index: &str, actual: &str) -> Result<bool, TypeError> {
@@ -168,7 +182,6 @@ pub fn evaluar_condicion(cond: &Expresion, index: &str, actual: &str) -> Result<
 
     Ok(condition)
 }
-
 
 ///
 /// Compara los Stings recibidos
@@ -200,19 +213,22 @@ pub fn cmp_int(compare: &isize, actual: &isize, operador: &Operador) -> bool {
 
 ///
 /// Devuelve una tupla con los indices
-/// 
-fn obtener_indice<'a>(index: &str, valor1: &'a str, valor2: &'a str ) -> Result<(&'a str, &'a str) , TypeError> {
-
-    if index.contains(valor1) && index.contains(valor2){
+///
+fn obtener_indice<'a>(
+    index: &str,
+    valor1: &'a str,
+    valor2: &'a str,
+) -> Result<(&'a str, &'a str), TypeError> {
+    if index.contains(valor1) && index.contains(valor2) {
         Ok((valor1, valor2))
-    }else if index.contains(valor1){
+    } else if index.contains(valor1) {
         Ok((valor1, valor1))
-    }else if index.contains(valor2){
+    } else if index.contains(valor2) {
         Ok((valor2, valor2))
-    }else if comparar(valor1, valor2, &Operador::Igual){
+    } else if comparar(valor1, valor2, &Operador::Igual) {
         println!("a");
         Ok(("", ""))
-    }else {
+    } else {
         Err(TypeError::InvalidColumn)
     }
 }
@@ -220,24 +236,28 @@ fn obtener_indice<'a>(index: &str, valor1: &'a str, valor2: &'a str ) -> Result<
 ///
 /// Devuelve la posicion de un elemento en el indice
 ///
-fn obtener_posicion_indice(columns: &Vec<&str>, value: &str) -> usize{
+fn obtener_posicion_indice(columns: &[&str], value: &str) -> usize {
     columns.iter().position(|&x| x == value).unwrap_or(0)
 }
 
 ///
 /// Devuelve true si un &str es numerico
 ///
-fn es_numero(str: &str) -> bool{
+fn es_numero(str: &str) -> bool {
     str.chars().all(|ch: char| ch.is_numeric())
 }
 
 ///
 /// Compara 2 &str con el operador pasado por parametro
-/// Si los 2 &str se pueden representar como numero los compara numericamente 
+/// Si los 2 &str se pueden representar como numero los compara numericamente
 ///
-fn comparar(valor1:&str, valor2:&str, op: &Operador) -> bool{
-    if es_numero(valor1) && es_numero(valor2){
-        cmp_int(&valor1.parse::<isize>().unwrap_or(0),&valor2.parse::<isize>().unwrap_or(0), op)
+fn comparar(valor1: &str, valor2: &str, op: &Operador) -> bool {
+    if es_numero(valor1) && es_numero(valor2) {
+        cmp_int(
+            &valor1.parse::<isize>().unwrap_or(0),
+            &valor2.parse::<isize>().unwrap_or(0),
+            op,
+        )
     } else {
         cmp_str(valor1, valor2, op)
     }

@@ -75,7 +75,7 @@ fn es_mayor(ascendete: bool, mayor: &str, actual: &str) -> bool {
                 &Operador::Menor,
             )
         } else {
-            cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Menor)
+            cmp_str(mayor, actual, &Operador::Menor)
         }
     } else if mayor.chars().all(|ch: char| ch.is_numeric())
         && actual.chars().all(|c| c.is_numeric())
@@ -86,7 +86,7 @@ fn es_mayor(ascendete: bool, mayor: &str, actual: &str) -> bool {
             &Operador::Mayor,
         )
     } else {
-        cmp_str(&mayor.to_string(), &actual.to_string(), &Operador::Mayor)
+        cmp_str(mayor, actual, &Operador::Mayor)
     }
 }
 
