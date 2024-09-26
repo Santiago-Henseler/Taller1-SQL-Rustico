@@ -131,7 +131,7 @@ fn main() {
         return;
     }
 
-    match ejecutar(&args[2].replace("\n", ""), &args[1]) {
+    match ejecutar(&args[2].replace("\n", " "), &args[1]) {
         Err(TypeError::InvalidSintax) => {
             print!("InvalidSintax: ");
             show_error(&args[2].replace("\n", ""))
