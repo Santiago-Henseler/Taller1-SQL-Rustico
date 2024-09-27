@@ -101,7 +101,7 @@ fn show_error(query: &str) {
     let vec: Vec<&str> = query.split_whitespace().collect::<Vec<&str>>();
 
     if let Some(comando) = vec.first() {
-        match *comando {
+        match comando.to_uppercase().as_str() {
             "INSERT" => {
                 println!("El comando se debe ejecutar como 'INSERT INTO tabla (col_0, col_1, col_2, col3) VALUES (new_0, new_1, new_2, new_3)'")
             }
