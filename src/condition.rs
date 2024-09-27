@@ -226,7 +226,6 @@ fn obtener_indice<'a>(
     } else if index.contains(valor2) {
         Ok((valor2, valor2))
     } else if comparar(valor1, valor2, &Operador::Igual) {
-        println!("a");
         Ok(("", ""))
     } else {
         Err(TypeError::InvalidColumn)
