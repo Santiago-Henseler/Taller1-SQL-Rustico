@@ -26,10 +26,12 @@ impl Insert {
         }
 
         let str: Vec<&str> = query.split(&table).collect::<Vec<&str>>();
-        let mut kv_to_insert: HashMap<String, String> = HashMap::new();
+        if str.is_empty(){
+            return Err(TypeError::InvalidSintax)
+        }
         let s = str[1].split("VALUES").collect::<Vec<&str>>();
 
-        hacer_kv(&mut kv_to_insert, &s)?;
+        let kv_to_insert = hacer_kv( &s)?;
 
         if kv_to_insert.is_empty() {
             return Err(TypeError::InvalidSintax);
@@ -53,7 +55,9 @@ fn limpiar_valor(str: &str) -> Vec<String> {
 ///
 /// Si no puede crear el par columna-valor devuelve un error de InvalidSintax
 ///
-fn hacer_kv(hash: &mut HashMap<String, String>, str: &[&str]) -> Result<(), TypeError> {
+fn hacer_kv(str: &[&str]) -> Result<HashMap<String, String>, TypeError> {
+    let mut hash: HashMap<String, String> = HashMap::new();
+
     match (str.first(), str.get(1)) {
         (Some(keys), Some(values)) => {
             let vec_keys: Vec<String> = limpiar_valor(keys);
@@ -71,7 +75,7 @@ fn hacer_kv(hash: &mut HashMap<String, String>, str: &[&str]) -> Result<(), Type
                 hash.insert(vec_keys[i].to_string(), vec_values[i].to_string());
             }
 
-            Ok(())
+            Ok(hash)
         }
         _ => Err(TypeError::InvalidSintax),
     }
