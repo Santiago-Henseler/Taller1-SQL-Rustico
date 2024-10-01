@@ -72,14 +72,6 @@ fn hacer_condition(str: &str) -> Result<Condicion, TypeError> {
     }
 }
 
-fn exp(exp_vec: Vec<&str>) -> Result<Vec<Expresion>, TypeError> {
-    let mut exprs: Vec<Expresion> = Vec::new();
-    for part in exp_vec {
-        exprs.push(obtener_condicion(part)?);
-    }
-    Ok(exprs)
-}
-
 ///
 /// Crea la Expresion de busqueda
 /// Si no se puede crear devuelve InvalidSintax.
@@ -99,33 +91,22 @@ pub fn obtener_condicion(condition: &str) -> Result<Expresion, TypeError> {
         return Ok(Expresion::Not(Box::new(expr)));
     }
 
-    let and: Vec<&str> = cond_cls.split(" AND ").collect::<Vec<&str>>();
-    if and.len() == 2 {
-        let mut exprs = exp(and)?;
-        if exprs.len() != 2 {
-            return Err(TypeError::InvalidSintax);
-        };
+    if  let Some((left, right)) = cond_cls.split_once(" AND ") {
         return Ok(Expresion::And(
-            Box::new(exprs.remove(0)),
-            Box::new(exprs.remove(0)),
+            Box::new(obtener_condicion(left)?),
+            Box::new(obtener_condicion(right)?)
         ));
     }
 
-    let or: Vec<&str> = cond_cls.split(" OR ").collect::<Vec<&str>>();
-    if or.len() == 2 {
-        let mut exprs = exp(or)?;
-        if exprs.len() != 2 {
-            return Err(TypeError::InvalidSintax);
-        };
+    if  let Some((left, right)) = cond_cls.split_once(" OR ") {
         return Ok(Expresion::Or(
-            Box::new(exprs.remove(0)),
-            Box::new(exprs.remove(0)),
+            Box::new(obtener_condicion(left)?),
+            Box::new(obtener_condicion(right)?)
         ));
     }
 
     Ok(Expresion::Condicion(hacer_condition(cond_cls)?))
 }
-
 ///
 /// Evalua la Condicion de busqueda
 /// Si no se encuentra la columna a comparar devuelve InvalidColumn
